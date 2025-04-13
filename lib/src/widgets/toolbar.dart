@@ -1,3 +1,4 @@
+// Update lib/src/widgets/toolbar.dart
 part of '../home.dart';
 
 class Toolbar extends HookConsumerWidget with HomeState, HomeEvent {
@@ -7,6 +8,12 @@ class Toolbar extends HookConsumerWidget with HomeState, HomeEvent {
   Widget build(BuildContext context, WidgetRef ref) {
     final history = directoryHistory(ref);
     final currentDir = currentDirectory(ref);
+
+    // Watch the favorites list to respond to changes
+    final favorites = ref.watch(favoritesProvider);
+
+    // Determine if current directory is a favorite by checking the watched favorites list
+    final isFavorite = favorites.any((fav) => fav.path == currentDir);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -43,6 +50,11 @@ class Toolbar extends HookConsumerWidget with HomeState, HomeEvent {
               ),
               child: Text(currentDir, style: const TextStyle(fontSize: 14), overflow: TextOverflow.ellipsis),
             ),
+          ),
+          IconButton(
+            icon: Icon(isFavorite ? Icons.star : Icons.star_border, color: isFavorite ? Colors.amber : null),
+            onPressed: () => toggleFavoriteDirectory(ref, currentDir),
+            tooltip: isFavorite ? 'Remove from favorites' : 'Add to favorites',
           ),
         ],
       ),

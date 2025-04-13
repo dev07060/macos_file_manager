@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
+import 'package:macos_file_manager/providers/favorites_provider.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
+import 'package:macos_file_manager/src/widgets/favorites_section.dart';
 
 import 'home_event.dart';
 import 'home_state.dart';
@@ -13,6 +15,7 @@ import 'home_state.dart';
 part 'widgets/file_details.dart';
 part 'widgets/file_item.dart';
 part 'widgets/toolbar.dart';
+// Update lib/src/home.dart to include the favorites section
 
 class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
   const HomePage({super.key});
@@ -41,6 +44,8 @@ class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
                   width: 300,
                   child: Column(
                     children: [
+                      // Add Favorites section above the file list
+                      const FavoritesSection(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(

@@ -5,6 +5,7 @@ import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
+import 'package:macos_file_manager/providers/favorites_provider.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:path/path.dart' as path;
 
@@ -423,5 +424,13 @@ mixin class HomeEvent {
         },
       );
     }
+  }
+
+  // Update in lib/src/home_event.dart
+  Future<void> toggleFavoriteDirectory(WidgetRef ref, String directoryPath) async {
+    final directoryName = path.basename(directoryPath);
+
+    // Use the notifier to toggle the favorite status
+    ref.read(favoritesProvider.notifier).toggleFavorite(directoryPath, directoryName);
   }
 }
