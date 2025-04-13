@@ -1,7 +1,7 @@
 part of '../home.dart';
 
 class Toolbar extends HookConsumerWidget with HomeState, HomeEvent {
-  const Toolbar({Key? key}) : super(key: key);
+  const Toolbar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

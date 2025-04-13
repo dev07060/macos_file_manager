@@ -1,7 +1,7 @@
 part of '../home.dart';
 
 class FileItem extends HookConsumerWidget with HomeEvent {
-  const FileItem({Key? key, required this.item}) : super(key: key);
+  const FileItem({super.key, required this.item});
 
   final FileSystemItem item;
 
@@ -9,28 +9,50 @@ class FileItem extends HookConsumerWidget with HomeEvent {
   Widget build(BuildContext context, WidgetRef ref) {
     final isSelected = item.isSelected;
 
-    return Material(
-      color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.transparent,
-      child: InkWell(
-        onTap: () => handleItemClick(ref, item),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Icon(
-                item.type == FileSystemItemType.directory ? Icons.folder : _getFileIcon(item.name),
-                color: item.type == FileSystemItemType.directory ? Colors.amber.shade800 : Colors.blueGrey,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  item.name,
-                  style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
-                  overflow: TextOverflow.ellipsis,
+    // Use FocusNode to detect keyboard events
+    final focusNode = useFocusNode();
+
+    return Focus(
+      focusNode: focusNode,
+      onKeyEvent: (node, event) {
+        // Handle Shift key event
+        if (event.logicalKey == LogicalKeyboardKey.shift) {
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Material(
+        color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // Get shift key state from keyboard mapping
+            final isShiftPressed =
+                RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift) ||
+                RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+                RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight);
+
+            handleItemClick(ref, item, isShiftKeyPressed: isShiftPressed);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Icon(
+                  item.type == FileSystemItemType.directory ? Icons.folder : _getFileIcon(item.name),
+                  color: item.type == FileSystemItemType.directory ? Colors.amber.shade800 : Colors.blueGrey,
+                  size: 24,
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item.name,
+                    style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (isSelected) const Icon(Icons.check_circle, color: Colors.blue, size: 16),
+              ],
+            ),
           ),
         ),
       ),

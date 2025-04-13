@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show immutable;
@@ -16,7 +17,7 @@ class FileSystemItem {
     required this.modifiedAt,
     required this.createdAt,
     this.isSelected = false,
-    this.subItemCount = const SubItemCount(files: 0, directories: 0), // Added subItemCount
+    this.subItemCount = const SubItemCount(files: 0, directories: 0),
   });
 
   final String path;
@@ -26,7 +27,7 @@ class FileSystemItem {
   final DateTime modifiedAt;
   final DateTime createdAt;
   final bool isSelected;
-  final SubItemCount subItemCount; // Track count of subdirectories and files
+  final SubItemCount subItemCount;
 
   String get formattedSize {
     if (type == FileSystemItemType.directory) return '--';
@@ -161,7 +162,65 @@ class FileSystemItemList extends Notifier<List<FileSystemItem>> {
     }
   }
 
+  // Modified to handle multi-selection
+  void toggleItemSelection(String path, {bool isShiftKeyPressed = false, String? lastSelectedPath}) {
+    if (isShiftKeyPressed && lastSelectedPath != null) {
+      // Find indices for shift selection
+      final lastSelectedIndex = state.indexWhere((item) => item.path == lastSelectedPath);
+      final currentIndex = state.indexWhere((item) => item.path == path);
+
+      if (lastSelectedIndex != -1 && currentIndex != -1) {
+        final startIndex = lastSelectedIndex < currentIndex ? lastSelectedIndex : currentIndex;
+        final endIndex = lastSelectedIndex < currentIndex ? currentIndex : lastSelectedIndex;
+
+        state = [
+          for (int i = 0; i < state.length; i++)
+            if (i >= startIndex && i <= endIndex) state[i].copyWith(isSelected: true) else state[i],
+        ];
+      }
+    } else {
+      // Toggle single item selection
+      state = [
+        for (final item in state)
+          if (item.path == path) item.copyWith(isSelected: !item.isSelected) else item,
+      ];
+    }
+  }
+
+  // Clear all selections
+  void clearSelections() {
+    state = [for (final item in state) item.copyWith(isSelected: false)];
+  }
+
+  // Select only a single item (old behavior)
   void selectItem(String path) {
     state = [for (final item in state) item.copyWith(isSelected: item.path == path)];
+  }
+
+  // Get all selected items
+  List<FileSystemItem> getSelectedItems() {
+    return state.where((item) => item.isSelected).toList();
+  }
+
+  // Delete selected items
+  Future<void> deleteSelectedItems() async {
+    final selectedItems = getSelectedItems();
+    for (final item in selectedItems) {
+      try {
+        if (item.type == FileSystemItemType.directory) {
+          final directory = Directory(item.path);
+          await directory.delete(recursive: true);
+        } else {
+          final file = File(item.path);
+          await file.delete();
+        }
+      } catch (e) {
+        log('Error deleting ${item.path}: $e');
+      }
+    }
+
+    // Reload current directory to reflect changes
+    final currentDirectory = paths.dirname(selectedItems.first.path);
+    await loadDirectory(currentDirectory);
   }
 }
