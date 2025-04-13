@@ -355,4 +355,73 @@ mixin class HomeEvent {
       }
     }
   }
+
+  ///
+  /// Rename a file or directory
+  ///
+  Future<void> renameFileSystemItem(WidgetRef ref, FileSystemItem item, String newName, BuildContext context) async {
+    if (newName.isEmpty || newName == item.name) return;
+
+    final directory = path.dirname(item.path);
+    final newPath = path.join(directory, newName);
+
+    // Check if a file with this name already exists
+    if (File(newPath).existsSync() || Directory(newPath).existsSync()) {
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('파일 "$newName"은(는) 이미 존재합니다.'),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('확인'))],
+          );
+        },
+      );
+      return;
+    }
+
+    try {
+      if (item.type == FileSystemItemType.file) {
+        final file = File(item.path);
+        await file.rename(newPath);
+      } else {
+        final directory = Directory(item.path);
+        await directory.rename(newPath);
+      }
+
+      // Refresh the current directory
+      final currentDir = ref.read(currentDirectoryProvider);
+      await ref.read(fileSystemItemListProvider.notifier).loadDirectory(currentDir);
+
+      // Update the selectedFileItemProvider with the renamed item
+      final updatedItemIndex = ref.read(fileSystemItemListProvider).indexWhere((i) => i.path == newPath);
+      if (updatedItemIndex != -1) {
+        final updatedItem = ref.read(fileSystemItemListProvider)[updatedItemIndex];
+        ref.read(selectedFileItemProvider.notifier).state = updatedItem;
+
+        // Update the lastSelectedPathProvider
+        ref.read(lastSelectedPathProvider.notifier).state = updatedItem.path;
+
+        // Make sure the renamed item is selected in the list
+        ref.read(fileSystemItemListProvider.notifier).selectItem(updatedItem.path);
+      } else {
+        // If the item can't be found, clear the selection
+        ref.read(selectedFileItemProvider.notifier).state = null;
+        ref.read(lastSelectedPathProvider.notifier).state = null;
+      }
+    } catch (e) {
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('파일 이름을 변경하지 못했습니다: $e'),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('확인'))],
+          );
+        },
+      );
+    }
+  }
 }

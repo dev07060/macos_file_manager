@@ -1,6 +1,6 @@
 part of '../home.dart';
 
-class FileDetails extends HookConsumerWidget with HomeState {
+class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
   const FileDetails({super.key});
 
   // file format list
@@ -32,6 +32,31 @@ class FileDetails extends HookConsumerWidget with HomeState {
 
     // isInfoCollapsed state
     final isInfoCollapsed = useState(false);
+
+    // Editing state for filename
+    final isEditingFilename = useState(false);
+    final textEditingController = useTextEditingController();
+    final focusNode = useFocusNode();
+
+    // Set up text controller when selected item changes
+    useEffect(() {
+      if (selectedItem != null) {
+        textEditingController.text = selectedItem.name;
+      }
+      return null;
+    }, [selectedItem]);
+
+    // Set up focus listener to exit editing mode when focus is lost
+    useEffect(() {
+      void onFocusChange() {
+        if (!focusNode.hasFocus && isEditingFilename.value) {
+          isEditingFilename.value = false;
+        }
+      }
+
+      focusNode.addListener(onFocusChange);
+      return () => focusNode.removeListener(onFocusChange);
+    }, [focusNode]);
 
     if (selectedItem == null) {
       return const Center(child: Text('No file selected', style: TextStyle(fontSize: 16, color: Colors.grey)));
@@ -68,10 +93,43 @@ class FileDetails extends HookConsumerWidget with HomeState {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        selectedItem.name,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
+                      // Editable filename
+                      GestureDetector(
+                        onTap: () {
+                          if (!isEditingFilename.value) {
+                            isEditingFilename.value = true;
+                            // Ensure focus in the next frame after state changes
+                            Future.microtask(() => focusNode.requestFocus());
+                          }
+                        },
+                        child:
+                            isEditingFilename.value
+                                ? TextField(
+                                  controller: textEditingController,
+                                  focusNode: focusNode,
+                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                  decoration: InputDecoration(
+                                    isDense: true,
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+                                    suffixIcon: IconButton(
+                                      icon: const Icon(Icons.check),
+                                      onPressed: () {
+                                        renameFileSystemItem(ref, selectedItem, textEditingController.text, context);
+                                        isEditingFilename.value = false;
+                                      },
+                                    ),
+                                  ),
+                                  onSubmitted: (value) {
+                                    renameFileSystemItem(ref, selectedItem, value, context);
+                                    isEditingFilename.value = false;
+                                  },
+                                )
+                                : Text(
+                                  selectedItem.name,
+                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                       ),
                       Text(
                         selectedItem.path,
