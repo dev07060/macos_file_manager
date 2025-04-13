@@ -54,7 +54,7 @@ class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
                         ),
                         child: Row(
                           children: [
-                            const Text('Name', style: TextStyle(fontWeight: FontWeight.bold)),
+                            const Text('Current Directory', style: TextStyle(fontWeight: FontWeight.bold)),
                             const Spacer(),
                             // Show action icons only when items are selected
                             if (selectedCount > 0) ...[

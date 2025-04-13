@@ -81,6 +81,7 @@ class FileItem extends HookConsumerWidget with HomeEvent {
       case 'gif':
       case 'bmp':
       case 'svg':
+      case 'heic':
         return Icons.image;
       case 'mp3':
       case 'wav':
