@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/foundation.dart' show immutable;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:path/path.dart' as paths;
@@ -15,6 +16,7 @@ class FileSystemItem {
     required this.modifiedAt,
     required this.createdAt,
     this.isSelected = false,
+    this.subItemCount = const SubItemCount(files: 0, directories: 0), // Added subItemCount
   });
 
   final String path;
@@ -24,6 +26,7 @@ class FileSystemItem {
   final DateTime modifiedAt;
   final DateTime createdAt;
   final bool isSelected;
+  final SubItemCount subItemCount; // Track count of subdirectories and files
 
   String get formattedSize {
     if (type == FileSystemItemType.directory) return '--';
@@ -43,7 +46,7 @@ class FileSystemItem {
   }
 
   // Create a copy of this file with different selection state
-  FileSystemItem copyWith({bool? isSelected}) {
+  FileSystemItem copyWith({bool? isSelected, SubItemCount? subItemCount}) {
     return FileSystemItem(
       path: path,
       name: name,
@@ -52,12 +55,35 @@ class FileSystemItem {
       modifiedAt: modifiedAt,
       createdAt: createdAt,
       isSelected: isSelected ?? this.isSelected,
+      subItemCount: subItemCount ?? this.subItemCount,
     );
   }
 
   @override
   String toString() {
     return 'FileSystemItem(name: $name, type: $type, size: $formattedSize)';
+  }
+}
+
+// A class to hold counts of subdirectories and files
+class SubItemCount {
+  final int files;
+  final int directories;
+
+  const SubItemCount({required this.files, required this.directories});
+
+  int get total => files + directories;
+
+  String get formattedCount {
+    if (total == 0) return 'Empty';
+    final parts = <String>[];
+    if (directories > 0) {
+      parts.add('$directories ${directories == 1 ? 'folder' : 'folders'}');
+    }
+    if (files > 0) {
+      parts.add('$files ${files == 1 ? 'file' : 'files'}');
+    }
+    return parts.join(', ');
   }
 }
 
@@ -77,6 +103,13 @@ class FileSystemItemList extends Notifier<List<FileSystemItem>> {
         final stat = await entity.stat();
         final name = paths.basename(entity.path);
 
+        // Count subdirectories and files for directories
+        SubItemCount subItemCount = const SubItemCount(files: 0, directories: 0);
+
+        if (entity is Directory) {
+          subItemCount = await _countSubItems(entity.path);
+        }
+
         items.add(
           FileSystemItem(
             path: entity.path,
@@ -86,6 +119,7 @@ class FileSystemItemList extends Notifier<List<FileSystemItem>> {
             modifiedAt: stat.modified,
             createdAt: stat.changed,
             isSelected: false,
+            subItemCount: subItemCount,
           ),
         );
       }
@@ -101,6 +135,29 @@ class FileSystemItemList extends Notifier<List<FileSystemItem>> {
       state = items;
     } catch (e) {
       state = [];
+    }
+  }
+
+  // Helper method to count files and directories in a directory
+  Future<SubItemCount> _countSubItems(String directoryPath) async {
+    try {
+      int files = 0;
+      int directories = 0;
+
+      final directory = Directory(directoryPath);
+      final entities = await directory.list().toList();
+
+      for (var entity in entities) {
+        if (entity is Directory) {
+          directories++;
+        } else {
+          files++;
+        }
+      }
+
+      return SubItemCount(files: files, directories: directories);
+    } catch (e) {
+      return const SubItemCount(files: 0, directories: 0);
     }
   }
 
