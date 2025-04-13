@@ -1,9 +1,8 @@
 import 'dart:io';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:path/path.dart' as path;
-
-import '../model/file_system_item.dart';
 
 // Provider for the list of file system items
 final fileSystemItemListProvider = NotifierProvider<FileSystemItemList, List<FileSystemItem>>(FileSystemItemList.new);

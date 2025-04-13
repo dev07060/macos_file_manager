@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/model/file_system_item.dart';
+import 'package:macos_file_manager/providers/file_system_providers.dart';
 
-import '../model/file_system_item.dart';
-import '../providers/file_system_providers.dart';
 import 'home_event.dart';
 import 'home_state.dart';
 

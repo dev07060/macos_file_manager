@@ -8,6 +8,7 @@ class FileItem extends HookConsumerWidget with HomeEvent {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isSelected = item.isSelected;
+    final selectedCount = ref.watch(selectedItemsCountProvider);
 
     // Use FocusNode to detect keyboard events
     final focusNode = useFocusNode();
@@ -15,8 +16,11 @@ class FileItem extends HookConsumerWidget with HomeEvent {
     return Focus(
       focusNode: focusNode,
       onKeyEvent: (node, event) {
-        // Handle Shift key event
-        if (event.logicalKey == LogicalKeyboardKey.shift) {
+        // Handle key events
+        if (event.logicalKey == LogicalKeyboardKey.shift ||
+            event.logicalKey == LogicalKeyboardKey.control ||
+            event.logicalKey == LogicalKeyboardKey.controlLeft ||
+            event.logicalKey == LogicalKeyboardKey.controlRight) {
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
@@ -25,13 +29,18 @@ class FileItem extends HookConsumerWidget with HomeEvent {
         color: isSelected ? Colors.blue.withValues(alpha: .1) : Colors.transparent,
         child: InkWell(
           onTap: () {
-            // Get shift key state from HardwareKeyboard
+            // Get modifier key states
             final isShiftPressed =
                 HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shift) ||
                 HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
                 HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftRight);
 
-            handleItemClick(ref, item, isShiftKeyPressed: isShiftPressed);
+            final isCtrlPressed =
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.control) ||
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.controlLeft) ||
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.controlRight);
+
+            handleItemClick(ref, item, isShiftKeyPressed: isShiftPressed, isCtrlKeyPressed: isCtrlPressed);
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -50,7 +59,8 @@ class FileItem extends HookConsumerWidget with HomeEvent {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (isSelected) const Icon(Icons.check_circle, color: Colors.blue, size: 16),
+                // Only show check icon if multiple items are selected
+                if (isSelected && selectedCount > 1) const Icon(Icons.check_circle, color: Colors.blue, size: 16),
               ],
             ),
           ),
