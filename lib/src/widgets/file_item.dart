@@ -22,14 +22,14 @@ class FileItem extends HookConsumerWidget with HomeEvent {
         return KeyEventResult.ignored;
       },
       child: Material(
-        color: isSelected ? Colors.blue.withOpacity(0.1) : Colors.transparent,
+        color: isSelected ? Colors.blue.withValues(alpha: .1) : Colors.transparent,
         child: InkWell(
           onTap: () {
-            // Get shift key state from keyboard mapping
+            // Get shift key state from HardwareKeyboard
             final isShiftPressed =
-                RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shift) ||
-                RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
-                RawKeyboard.instance.keysPressed.contains(LogicalKeyboardKey.shiftRight);
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shift) ||
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftRight);
 
             handleItemClick(ref, item, isShiftKeyPressed: isShiftPressed);
           },

@@ -1,10 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../model/file_system_item.dart';
+import '../providers/file_system_providers.dart';
 import 'home_event.dart';
 import 'home_state.dart';
 
@@ -25,6 +27,7 @@ class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
     }, const []);
 
     final items = fileSystemItems(ref);
+    final selectedCount = ref.watch(selectedItemsCountProvider);
 
     return Scaffold(
       body: Column(
@@ -44,7 +47,27 @@ class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
                           color: Colors.grey.shade200,
                           border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
                         ),
-                        child: const Row(children: [Text('Name', style: TextStyle(fontWeight: FontWeight.bold))]),
+                        child: Row(
+                          children: [
+                            const Text('Name', style: TextStyle(fontWeight: FontWeight.bold)),
+                            const Spacer(),
+                            // Show action icons only when items are selected
+                            if (selectedCount > 0) ...[
+                              // Delete button
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, size: 20),
+                                tooltip: 'Delete selected items',
+                                onPressed: () => deleteSelectedItems(ref, context),
+                              ),
+                              // Compress button
+                              IconButton(
+                                icon: const Icon(Icons.archive_outlined, size: 20),
+                                tooltip: 'Compress selected items',
+                                onPressed: () => compressSelectedItems(ref, context),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                       Expanded(
                         child: ListView.builder(

@@ -32,25 +32,24 @@ mixin class HomeEvent {
   ///
   Future<void> handleItemClick(WidgetRef ref, FileSystemItem item, {bool isShiftKeyPressed = false}) async {
     final lastSelectedPath = ref.read(lastSelectedPathProvider);
+    final notifier = ref.read(fileSystemItemListProvider.notifier);
 
-    if (item.type == FileSystemItemType.directory && !isShiftKeyPressed && !item.isSelected) {
-      // Regular click on an unselected directory - navigate into it
+    if (item.type == FileSystemItemType.directory && !isShiftKeyPressed) {
       await navigateToDirectory(ref, item.path);
-    } else {
-      // Toggle selection or shift-select
-      ref
-          .read(fileSystemItemListProvider.notifier)
-          .toggleItemSelection(item.path, isShiftKeyPressed: isShiftKeyPressed, lastSelectedPath: lastSelectedPath);
-
-      // Update the last selected path
+    } else if (isShiftKeyPressed) {
+      notifier.toggleItemSelection(item.path, isShiftKeyPressed: true, lastSelectedPath: lastSelectedPath);
       ref.read(lastSelectedPathProvider.notifier).state = item.path;
 
-      // For compatibility with single selection code, update selectedFileItemProvider as well
       if (item.isSelected) {
         ref.read(selectedFileItemProvider.notifier).state = item;
       } else if (ref.read(selectedFileItemProvider)?.path == item.path) {
         ref.read(selectedFileItemProvider.notifier).state = null;
       }
+    } else {
+      notifier.clearSelections();
+      notifier.toggleItemSelection(item.path, isShiftKeyPressed: false, lastSelectedPath: null);
+      ref.read(lastSelectedPathProvider.notifier).state = item.path;
+      ref.read(selectedFileItemProvider.notifier).state = item;
     }
   }
 
