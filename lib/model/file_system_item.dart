@@ -202,20 +202,18 @@ class FileSystemItemList extends Notifier<List<FileSystemItem>> {
     return state.where((item) => item.isSelected).toList();
   }
 
-  // Delete selected items
+  // Delete selected items by moving them to the Trash
   Future<void> deleteSelectedItems() async {
     final selectedItems = getSelectedItems();
     for (final item in selectedItems) {
       try {
-        if (item.type == FileSystemItemType.directory) {
-          final directory = Directory(item.path);
-          await directory.delete(recursive: true);
-        } else {
-          final file = File(item.path);
-          await file.delete();
+        // Use macOS 'trash' command to move the item to the Trash
+        final result = await Process.run('trash', [item.path]);
+        if (result.exitCode != 0) {
+          log('Error moving ${item.path} to Trash: ${result.stderr}');
         }
       } catch (e) {
-        log('Error deleting ${item.path}: $e');
+        log('Error moving ${item.path} to Trash: $e');
       }
     }
 
