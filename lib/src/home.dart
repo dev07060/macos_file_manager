@@ -15,7 +15,6 @@ import 'home_state.dart';
 part 'widgets/file_details.dart';
 part 'widgets/file_item.dart';
 part 'widgets/toolbar.dart';
-// Update lib/src/home.dart to include the favorites section
 
 class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
   const HomePage({super.key});

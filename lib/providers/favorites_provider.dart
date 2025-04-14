@@ -1,4 +1,3 @@
-// lib/providers/favorites_provider.dart
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
@@ -7,10 +6,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/favorite_directory.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Key for storing favorites in SharedPreferences
 const String _favoritesKey = 'favorites_list';
 
-// Default directories to include in favorites
 List<FavoriteDirectory> _getDefaultFavorites() {
   final homeDir = Platform.environment['HOME'];
   if (homeDir == null) return [];
@@ -29,34 +26,24 @@ class FavoritesNotifier extends StateNotifier<List<FavoriteDirectory>> {
     _loadFavorites();
   }
 
-  // Load favorites from SharedPreferences
   void _loadFavorites() {
     final defaultFavorites = _getDefaultFavorites();
 
-    // Get stored favorites from SharedPreferences
     final storedFavorites = _prefs.getStringList(_favoritesKey);
 
     if (storedFavorites == null || storedFavorites.isEmpty) {
-      // If no saved favorites exist, use defaults
       state = defaultFavorites;
       _saveFavorites();
       return;
     }
 
-    // Convert stored JSON strings to FavoriteDirectory objects
     final userFavorites =
-        storedFavorites
-            .map((json) => _favoriteFromJson(json))
-            .whereType<FavoriteDirectory>() // Filter out nulls
-            .toList();
+        storedFavorites.map((json) => _favoriteFromJson(json)).whereType<FavoriteDirectory>().toList();
 
-    // Combine system defaults with user favorites, ensuring no duplicates
     final allFavorites = <FavoriteDirectory>[];
 
-    // Add all system defaults first
     allFavorites.addAll(defaultFavorites);
 
-    // Add user favorites that don't duplicate system paths
     for (final favorite in userFavorites) {
       if (!favorite.isSystem && !allFavorites.any((f) => f.path == favorite.path)) {
         allFavorites.add(favorite);
@@ -66,9 +53,7 @@ class FavoritesNotifier extends StateNotifier<List<FavoriteDirectory>> {
     state = allFavorites;
   }
 
-  // Save favorites to SharedPreferences
   void _saveFavorites() {
-    // Only save non-system favorites since system favorites are regenerated at startup
     final userFavorites =
         state.where((favorite) => !favorite.isSystem).map((favorite) => _favoriteToJson(favorite)).toList();
 

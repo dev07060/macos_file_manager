@@ -6,13 +6,9 @@ import 'providers/favorites_provider.dart';
 import 'src/home.dart';
 
 void main() async {
-  // Ensure Flutter is initialized before accessing native services
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize SharedPreferences
   final sharedPreferences = await SharedPreferences.getInstance();
 
-  // Run the app with the ProviderScope, overriding the shared preferences provider
   runApp(
     ProviderScope(overrides: [sharedPreferencesProvider.overrideWithValue(sharedPreferences)], child: const MyApp()),
   );

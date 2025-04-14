@@ -17,9 +17,7 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
     'tif',
   ];
 
-  // 실행 메서드 구현
   Future<void> _executeScript(BuildContext context, WidgetRef ref, FileSystemItem item) async {
-    // 보안 경고 다이얼로그 표시
     final shouldProceed = await showDialog<bool>(
       context: context,
       builder:
@@ -48,10 +46,8 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
 
     final result = await executeShellScript(item.path, context);
 
-    // 다이얼로그 닫기
     Navigator.of(context).pop();
 
-    // 결과 표시
     showDialog(
       context: context,
       builder:
@@ -95,7 +91,6 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
     );
   }
 
-  // image checker
   bool _isImageFile(FileSystemItem item) {
     if (item.type == FileSystemItemType.file) {
       final extension = item.fileExtension.toLowerCase();
@@ -116,15 +111,12 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedItem = selectedFileItem(ref);
 
-    // isInfoCollapsed state
     final isInfoCollapsed = useState(false);
 
-    // Editing state for filename
     final isEditingFilename = useState(false);
     final textEditingController = useTextEditingController();
     final focusNode = useFocusNode();
 
-    // Set up text controller when selected item changes
     useEffect(() {
       if (selectedItem != null) {
         textEditingController.text = selectedItem.name;

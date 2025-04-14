@@ -4,40 +4,31 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:path/path.dart' as path;
 
-// Provider for the list of file system items
 final fileSystemItemListProvider = NotifierProvider<FileSystemItemList, List<FileSystemItem>>(FileSystemItemList.new);
 
-// Provider for the current directory path
 final currentDirectoryProvider = StateProvider<String>((ref) {
-  // Start with the user's home directory
   return Directory.current.path;
 });
 
-// Provider for the currently selected file system item (keep for backward compatibility)
 final selectedFileItemProvider = StateProvider<FileSystemItem?>((ref) => null);
 
-// Provider for tracking the last selected item path (for shift-selection)
 final lastSelectedPathProvider = StateProvider<String?>((ref) => null);
 
-// Provider to count selected items
 final selectedItemsCountProvider = Provider<int>((ref) {
   final items = ref.watch(fileSystemItemListProvider);
   return items.where((item) => item.isSelected).length;
 });
 
-// Provider to count selected directories
 final selectedDirectoriesCountProvider = Provider<int>((ref) {
   final items = ref.watch(fileSystemItemListProvider);
   return items.where((item) => item.isSelected && item.type == FileSystemItemType.directory).length;
 });
 
-// Provider to count selected files
 final selectedFilesCountProvider = Provider<int>((ref) {
   final items = ref.watch(fileSystemItemListProvider);
   return items.where((item) => item.isSelected && item.type == FileSystemItemType.file).length;
 });
 
-// Provider to track the path history for navigation
 final directoryHistoryProvider = StateNotifierProvider<DirectoryHistoryNotifier, DirectoryHistory>((ref) {
   return DirectoryHistoryNotifier();
 });
