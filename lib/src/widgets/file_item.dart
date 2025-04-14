@@ -73,6 +73,8 @@ class FileItem extends HookConsumerWidget with HomeEvent {
     final extension = fileName.split('.').last.toLowerCase();
 
     switch (extension) {
+      case 'sh':
+        return Icons.terminal;
       case 'pdf':
         return Icons.picture_as_pdf;
       case 'jpg':
