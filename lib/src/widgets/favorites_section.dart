@@ -83,7 +83,7 @@ class FavoritesSection extends HookConsumerWidget with HomeEvent {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.withOpacity(0.1),
+                                  color: Colors.blue.withValues(alpha: .1),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Text(

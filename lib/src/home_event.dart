@@ -433,4 +433,26 @@ mixin class HomeEvent {
     // Use the notifier to toggle the favorite status
     ref.read(favoritesProvider.notifier).toggleFavorite(directoryPath, directoryName);
   }
+
+  Future<Map<String, dynamic>> executeShellScript(String scriptPath, BuildContext context) async {
+    try {
+      // 스크립트 실행 권한 확인 및 부여
+      final statResult = await Process.run('chmod', ['+x', scriptPath]);
+      if (statResult.exitCode != 0) {
+        return {'success': false, 'output': '실행 권한을 부여할 수 없습니다: ${statResult.stderr}'};
+      }
+
+      // 스크립트 실행
+      final result = await Process.run('sh', [scriptPath]);
+
+      return {
+        'success': result.exitCode == 0,
+        'output': result.stdout,
+        'error': result.stderr,
+        'exitCode': result.exitCode,
+      };
+    } catch (e) {
+      return {'success': false, 'output': '스크립트 실행 중 오류가 발생했습니다: $e'};
+    }
+  }
 }

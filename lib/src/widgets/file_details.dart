@@ -17,11 +17,97 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
     'tif',
   ];
 
+  // 실행 메서드 구현
+  Future<void> _executeScript(BuildContext context, WidgetRef ref, FileSystemItem item) async {
+    // 보안 경고 다이얼로그 표시
+    final shouldProceed = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('보안 경고'),
+            content: const Text('쉘 스크립트를 실행하면 시스템에 영향을 줄 수 있습니다. 신뢰할 수 있는 스크립트만 실행하세요.\n\n계속하시겠습니까?'),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('실행', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+    );
+
+    if (shouldProceed != true) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder:
+          (context) => const AlertDialog(
+            content: Row(children: [CircularProgressIndicator(), SizedBox(width: 20), Text('Running shell script...')]),
+          ),
+    );
+
+    final result = await executeShellScript(item.path, context);
+
+    // 다이얼로그 닫기
+    Navigator.of(context).pop();
+
+    // 결과 표시
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text(result['success'] ? '실행 성공' : '실행 실패'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (result['success']) Text('종료 코드: ${result['exitCode'] ?? 'Unknown'}'),
+                  const SizedBox(height: 8),
+                  const Text('출력:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(4)),
+                    width: double.infinity,
+                    child: SelectableText(
+                      result['output'] ?? '출력 없음',
+                      style: const TextStyle(color: Colors.white, fontFamily: 'monospace'),
+                    ),
+                  ),
+                  if (result['error'] != null && result['error'].toString().isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    const Text('오류:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(4)),
+                      width: double.infinity,
+                      child: SelectableText(
+                        result['error'] ?? '',
+                        style: const TextStyle(color: Colors.red, fontFamily: 'monospace'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('닫기'))],
+          ),
+    );
+  }
+
   // image checker
   bool _isImageFile(FileSystemItem item) {
     if (item.type == FileSystemItemType.file) {
       final extension = item.fileExtension.toLowerCase();
       return _imageExtensions.contains(extension);
+    }
+    return false;
+  }
+
+  bool _isShellScript(FileSystemItem item) {
+    if (item.type == FileSystemItemType.file) {
+      final extension = item.fileExtension.toLowerCase();
+      return extension == 'sh';
     }
     return false;
   }
@@ -62,6 +148,7 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
       return const Center(child: Text('No file selected', style: TextStyle(fontSize: 16, color: Colors.grey)));
     }
 
+    final isShellScript = _isShellScript(selectedItem);
     final isImage = _isImageFile(selectedItem);
 
     return Container(
@@ -139,6 +226,25 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
                     ],
                   ),
                 ),
+                if (isShellScript) ...[
+                  // 스크립트 실행 섹션
+                  const Divider(height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        // 실행 버튼
+                        TextButton(
+                          child: const Text('Run .sh'),
+                          onPressed: () => _executeScript(context, ref, selectedItem),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
                 if (isImage)
                   IconButton(
                     icon: Icon(isInfoCollapsed.value ? Icons.expand_more : Icons.expand_less),
