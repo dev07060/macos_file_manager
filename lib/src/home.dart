@@ -8,6 +8,8 @@ import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/favorites_provider.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/src/widgets/favorites_section.dart';
+import 'package:path/path.dart' as path;
+import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 import 'home_event.dart';
 import 'home_state.dart';

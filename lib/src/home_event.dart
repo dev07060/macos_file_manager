@@ -13,7 +13,9 @@ mixin class HomeEvent {
   ///
   /// Navigate to a specific directory
   ///
-  Future<void> navigateToDirectory(WidgetRef ref, String directoryPath) async {
+  Future<void> navigateToDirectory(WidgetRef ref, String? directoryPath) async {
+    if (directoryPath == null) return;
+
     final notifier = ref.read(directoryHistoryProvider.notifier);
     notifier.navigateTo(directoryPath);
 
@@ -142,41 +144,67 @@ mixin class HomeEvent {
   /// Navigate to home directory
   ///
   Future<void> navigateToHome(WidgetRef ref) async {
-    // Try to get Desktop directory path, fallback to home directory if not found
-    final homePath = Platform.environment['HOME'];
-
-    if (homePath != null) {
-      final desktopPath = '$homePath/Desktop';
-
-      // Check if Desktop directory exists
-      final directory = Directory(desktopPath);
-      if (await directory.exists()) {
-        await navigateToDirectory(ref, desktopPath);
-        return;
+    String? desktopPath;
+    if (Platform.isMacOS) {
+      final homeDir = await getHomeDirectory();
+      if (homeDir != null) {
+        desktopPath = path.join(homeDir, 'Desktop');
+        final desktopDir = Directory(desktopPath);
+        if (!await desktopDir.exists()) {
+          desktopPath = homeDir; // If the desktop folder doesn't exist, fallback to the home directory
+        }
       }
+    } else {
+      desktopPath =
+          Platform.environment['HOME'] ?? '/'; // If it's not macOS, keep the existing method (modify as needed)
     }
 
-    // Fallback to home directory if Desktop doesn't exist
-    final fallbackPath = Platform.environment['HOME'] ?? '/';
-    await navigateToDirectory(ref, fallbackPath);
+    if (desktopPath != null) {
+      await navigateToDirectory(ref, desktopPath);
+    }
   }
 
   ///
-  /// Get the path to the Desktop directory
+  /// Get the path to the Desktop directory using Platform.environment
   ///
-  Future<String> getDesktopPath() async {
-    final desktopPath = '/Users/${Platform.environment['USER']}/Desktop';
-    log('Attempting to access: $desktopPath');
+  Future<String?> getDesktopPath() async {
+    if (Platform.isMacOS) {
+      try {
+        String? homeDir;
+        if (Platform.isMacOS || Platform.isLinux) {
+          homeDir = Platform.environment['HOME'];
+        } else if (Platform.isWindows) {
+          homeDir = Platform.environment['USERPROFILE'];
+        }
 
-    final directory = Directory(desktopPath);
-    final exists = await directory.exists();
-    log('Desktop exists: $exists');
-
-    if (exists) {
-      return desktopPath;
+        if (homeDir != null) {
+          final desktopPath = path.join(homeDir, 'Desktop');
+          final desktopDir = Directory(desktopPath);
+          if (await desktopDir.exists()) {
+            log('Attempting to access (Platform.environment): $desktopPath');
+            log('Desktop exists (Platform.environment): true');
+            return desktopPath;
+          } else {
+            log('Desktop does not exist at (Platform.environment): $desktopPath');
+            return homeDir; // If the desktop folder doesn't exist, return the home directory
+          }
+        } else {
+          log('Could not get home directory using Platform.environment');
+          return '/'; // Fallback to the default path if failed to get the home directory
+        }
+      } catch (e) {
+        log('Error getting desktop path with Platform.environment: $e');
+        return '/'; // Fallback to the default path if an error occurred
+      }
+    } else {
+      // If it's not macOS, keep the existing method (modify as needed)
+      final desktopPath = '/Users/${Platform.environment['USER']}/Desktop';
+      final directory = Directory(desktopPath);
+      final exists = await directory.exists();
+      log('Attempting to access (original): $desktopPath');
+      log('Desktop exists (original): $exists');
+      return exists ? desktopPath : Platform.environment['HOME'] ?? '/';
     }
-
-    return Platform.environment['HOME'] ?? '/';
   }
 
   ///
@@ -436,13 +464,13 @@ mixin class HomeEvent {
 
   Future<Map<String, dynamic>> executeShellScript(String scriptPath, BuildContext context) async {
     try {
-      // 스크립트 실행 권한 확인 및 부여
+      // Check and grant execute permission for the script
       final statResult = await Process.run('chmod', ['+x', scriptPath]);
       if (statResult.exitCode != 0) {
-        return {'success': false, 'output': '실행 권한을 부여할 수 없습니다: ${statResult.stderr}'};
+        return {'success': false, 'output': 'Failed to grant execute permission: ${statResult.stderr}'};
       }
 
-      // 스크립트 실행
+      // Execute the script
       final result = await Process.run('sh', [scriptPath]);
 
       return {
@@ -454,5 +482,14 @@ mixin class HomeEvent {
     } catch (e) {
       return {'success': false, 'output': '스크립트 실행 중 오류가 발생했습니다: $e'};
     }
+  }
+
+  Future<String?> getHomeDirectory() async {
+    if (Platform.isMacOS || Platform.isLinux) {
+      return Platform.environment['HOME'];
+    } else if (Platform.isWindows) {
+      return Platform.environment['USERPROFILE'];
+    }
+    return null; // Other platforms
   }
 }

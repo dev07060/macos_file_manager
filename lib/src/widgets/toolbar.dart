@@ -35,7 +35,7 @@ class Toolbar extends HookConsumerWidget with HomeState, HomeEvent {
           ),
           IconButton(
             icon: const Icon(Icons.arrow_upward),
-            onPressed: () => navigateUp(ref),
+            onPressed: history.canGoUpperDir ? () => navigateUp(ref) : null,
             tooltip: 'Parent Directory',
           ),
           IconButton(icon: const Icon(Icons.home), onPressed: () => navigateToHome(ref), tooltip: 'Home Directory'),
