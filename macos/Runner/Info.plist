@@ -28,5 +28,9 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need to access your photo library to crop images.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need to save cropped images to your photo library.</string>
 </dict>
 </plist>
