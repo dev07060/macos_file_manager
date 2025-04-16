@@ -25,7 +25,7 @@ class FavoritesSection extends HookConsumerWidget with HomeEvent, DragDropItems 
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: Colors.grey.shade200,
             border: Border(bottom: BorderSide(color: Colors.grey.shade300)),

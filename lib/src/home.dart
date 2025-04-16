@@ -1,22 +1,15 @@
-import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:macos_file_manager/model/file_system_item.dart';
-import 'package:macos_file_manager/providers/favorites_provider.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
-import 'package:macos_file_manager/src/drag_drop_items.dart';
+import 'package:macos_file_manager/src/home_event.dart';
+import 'package:macos_file_manager/src/home_state.dart';
 import 'package:macos_file_manager/src/widgets/favorites_section.dart';
-import 'package:super_drag_and_drop/super_drag_and_drop.dart';
-
-import 'home_event.dart';
-import 'home_state.dart';
-
-part 'widgets/file_details.dart';
-part 'widgets/file_item.dart';
-part 'widgets/toolbar.dart';
+import 'package:macos_file_manager/src/widgets/file_details.dart';
+import 'package:macos_file_manager/src/widgets/file_item.dart';
+import 'package:macos_file_manager/src/widgets/toolbar.dart';
 
 class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
   const HomePage({super.key});
@@ -32,6 +25,9 @@ class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
 
     final items = fileSystemItems(ref);
     final selectedCount = ref.watch(selectedItemsCountProvider);
+    final path = ref.watch(currentDirectoryProvider.notifier).state;
+    List<String> parts = path.split('/');
+    String result = parts[parts.length - 1];
 
     return Scaffold(
       body: Column(
@@ -48,28 +44,43 @@ class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
                       // Add Favorites section above the file list
                       const FavoritesSection(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade200,
                           border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
                         ),
                         child: Row(
                           children: [
-                            const Text('Current Directory', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Expanded(
+                              flex: 12,
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Text(
+                                  result,
+                                  maxLines: 1,
+                                  style: TextStyle(fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis),
+                                ),
+                              ),
+                            ),
                             const Spacer(),
                             // Show action icons only when items are selected
                             if (selectedCount > 0) ...[
                               // Delete button
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 20),
-                                tooltip: 'Delete selected items',
-                                onPressed: () => deleteSelectedItems(ref, context),
+                              Expanded(
+                                flex: 3,
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete_outline, size: 20),
+                                  tooltip: 'Delete selected items',
+                                  onPressed: () => deleteSelectedItems(ref, context),
+                                ),
                               ),
                               // Compress button
-                              IconButton(
-                                icon: const Icon(Icons.archive_outlined, size: 20),
-                                tooltip: 'Compress selected items',
-                                onPressed: () => compressSelectedItems(ref, context),
+                              Expanded(
+                                flex: 3,
+                                child: IconButton(
+                                  icon: const Icon(Icons.archive_outlined, size: 20),
+                                  tooltip: 'Compress selected items',
+                                  onPressed: () => compressSelectedItems(ref, context),
+                                ),
                               ),
                             ],
                           ],
@@ -89,7 +100,7 @@ class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
                 // Divider
                 Container(width: 1, color: Colors.grey.shade300),
                 // File details section (right side)
-                const Expanded(child: FileDetails()),
+                Expanded(child: FileDetails()),
               ],
             ),
           ),

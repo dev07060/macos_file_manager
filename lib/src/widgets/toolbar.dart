@@ -1,5 +1,8 @@
-// Update lib/src/widgets/toolbar.dart
-part of '../home.dart';
+import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/providers/favorites_provider.dart';
+import 'package:macos_file_manager/src/home_event.dart';
+import 'package:macos_file_manager/src/home_state.dart';
 
 class Toolbar extends HookConsumerWidget with HomeState, HomeEvent {
   const Toolbar({super.key});

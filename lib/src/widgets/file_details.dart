@@ -1,40 +1,147 @@
-part of '../home.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/model/file_system_item.dart';
+import 'package:macos_file_manager/src/home_event.dart';
+import 'package:macos_file_manager/src/home_state.dart';
+import 'package:macos_file_manager/src/widgets/file_header.dart';
+import 'package:macos_file_manager/src/widgets/image_preview.dart';
+import 'package:macos_file_manager/utils/dialog_utils.dart';
+import 'package:macos_file_manager/utils/file_utils.dart';
 
 class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
-  const FileDetails({super.key});
+  FileDetails({super.key});
 
-  // file format list
-  final List<String> _imageExtensions = const [
-    'jpg',
-    'jpeg',
-    'png',
-    'gif',
-    'bmp',
-    'webp',
-    'heic',
-    'heif',
-    'tiff',
-    'tif',
-  ];
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedItem = selectedFileItem(ref);
+
+    // 개별적으로 상태 관리
+    final isInfoCollapsed = useState(false);
+    final rotationAngle = useState(0);
+    final isEditingFilename = useState(false);
+    final lastSavedAngle = useState(0);
+    final isCropping = useState(false);
+    final textEditingController = useTextEditingController();
+    final focusNode = useFocusNode();
+
+    // 초기 설정
+    useEffect(() {
+      if (selectedItem != null) {
+        textEditingController.text = selectedItem.name;
+      }
+      return null;
+    }, [selectedItem]);
+
+    // 포커스 리스너 설정
+    useEffect(() {
+      void onFocusChange() {
+        if (!focusNode.hasFocus && isEditingFilename.value) {
+          isEditingFilename.value = false;
+        }
+      }
+
+      focusNode.addListener(onFocusChange);
+      return () => focusNode.removeListener(onFocusChange);
+    }, [focusNode]);
+
+    if (selectedItem == null) {
+      return const Center(child: Text('No file selected', style: TextStyle(fontSize: 16, color: Colors.grey)));
+    }
+
+    final isShellScript = FileUtils.isShellScript(selectedItem);
+    final isImage = FileUtils.isImageFile(selectedItem);
+
+    return Container(
+      color: Colors.white,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          FileHeader(
+            item: selectedItem,
+            isImage: isImage,
+            isInfoCollapsed: isInfoCollapsed.value,
+            onCollapseToggle: () {
+              isInfoCollapsed.value = !isInfoCollapsed.value;
+            },
+            isEditingFilename: isEditingFilename,
+            textEditingController: textEditingController,
+            focusNode: focusNode,
+            onRename: (newName) {
+              renameFileSystemItem(ref, selectedItem, newName, context);
+            },
+          ),
+          if (isShellScript) ...[
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: TextButton(
+                child: const Text('Run .sh'),
+                onPressed: () => _executeScript(context, ref, selectedItem),
+              ),
+            ),
+          ],
+          Expanded(
+            child:
+                isImage && isInfoCollapsed.value
+                    ? Column(
+                      children: [
+                        Expanded(
+                          child: ClipRect(
+                            // ClipRect 추가
+                            child: ImagePreview(
+                              imagePath: selectedItem.path,
+                              isFullView: true,
+                              rotationAngle: rotationAngle,
+                              isCropping: isCropping,
+                            ),
+                          ),
+                        ),
+                        ImageControlsWidget(
+                          rotationAngle: rotationAngle,
+                          isCropping: isCropping,
+                          lastSavedAngle: lastSavedAngle,
+                          imagePath: selectedItem.path,
+                        ),
+                      ],
+                    )
+                    : SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          FileInformationWidget(item: selectedItem),
+                          if (isImage) ...[
+                            const Divider(height: 1),
+                            Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Preview', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 16),
+                                  ImagePreview(
+                                    imagePath: selectedItem.path,
+                                    isFullView: false,
+                                    rotationAngle: rotationAngle,
+                                    isCropping: isCropping,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _executeScript(BuildContext context, WidgetRef ref, FileSystemItem item) async {
-    final shouldProceed = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('보안 경고'),
-            content: const Text('쉘 스크립트를 실행하면 시스템에 영향을 줄 수 있습니다. 신뢰할 수 있는 스크립트만 실행하세요.\n\n계속하시겠습니까?'),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('실행', style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          ),
-    );
-
+    final shouldProceed = await DialogUtils.showShellScriptWarning(context);
     if (shouldProceed != true) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -45,7 +152,6 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
     );
 
     final result = await executeShellScript(item.path, context);
-
     Navigator.of(context).pop();
 
     showDialog(
@@ -89,287 +195,5 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
             actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('닫기'))],
           ),
     );
-  }
-
-  bool _isImageFile(FileSystemItem item) {
-    if (item.type == FileSystemItemType.file) {
-      final extension = item.fileExtension.toLowerCase();
-      return _imageExtensions.contains(extension);
-    }
-    return false;
-  }
-
-  bool _isShellScript(FileSystemItem item) {
-    if (item.type == FileSystemItemType.file) {
-      final extension = item.fileExtension.toLowerCase();
-      return extension == 'sh';
-    }
-    return false;
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selectedItem = selectedFileItem(ref);
-
-    final isInfoCollapsed = useState(false);
-
-    final isEditingFilename = useState(false);
-    final textEditingController = useTextEditingController();
-    final focusNode = useFocusNode();
-
-    useEffect(() {
-      if (selectedItem != null) {
-        textEditingController.text = selectedItem.name;
-      }
-      return null;
-    }, [selectedItem]);
-
-    // Set up focus listener to exit editing mode when focus is lost
-    useEffect(() {
-      void onFocusChange() {
-        if (!focusNode.hasFocus && isEditingFilename.value) {
-          isEditingFilename.value = false;
-        }
-      }
-
-      focusNode.addListener(onFocusChange);
-      return () => focusNode.removeListener(onFocusChange);
-    }, [focusNode]);
-
-    if (selectedItem == null) {
-      return const Center(child: Text('No file selected', style: TextStyle(fontSize: 16, color: Colors.grey)));
-    }
-
-    final isShellScript = _isShellScript(selectedItem);
-    final isImage = _isImageFile(selectedItem);
-
-    return Container(
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
-            child: Row(
-              children: [
-                Icon(
-                  selectedItem.type == FileSystemItemType.directory
-                      ? Icons.folder
-                      : isImage
-                      ? Icons.image
-                      : Icons.insert_drive_file,
-                  size: 48,
-                  color:
-                      selectedItem.type == FileSystemItemType.directory
-                          ? Colors.amber.shade800
-                          : isImage
-                          ? Colors.blue
-                          : Colors.blueGrey,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Editable filename
-                      GestureDetector(
-                        onTap: () {
-                          if (!isEditingFilename.value) {
-                            isEditingFilename.value = true;
-                            // Ensure focus in the next frame after state changes
-                            Future.microtask(() => focusNode.requestFocus());
-                          }
-                        },
-                        child:
-                            isEditingFilename.value
-                                ? TextField(
-                                  controller: textEditingController,
-                                  focusNode: focusNode,
-                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                                  decoration: InputDecoration(
-                                    isDense: true,
-                                    contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
-                                    suffixIcon: IconButton(
-                                      icon: const Icon(Icons.check),
-                                      onPressed: () {
-                                        renameFileSystemItem(ref, selectedItem, textEditingController.text, context);
-                                        isEditingFilename.value = false;
-                                      },
-                                    ),
-                                  ),
-                                  onSubmitted: (value) {
-                                    renameFileSystemItem(ref, selectedItem, value, context);
-                                    isEditingFilename.value = false;
-                                  },
-                                )
-                                : Text(
-                                  selectedItem.name,
-                                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                      ),
-                      Text(
-                        selectedItem.path,
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                if (isShellScript) ...[
-                  // 스크립트 실행 섹션
-                  const Divider(height: 1),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        // 실행 버튼
-                        TextButton(
-                          child: const Text('Run .sh'),
-                          onPressed: () => _executeScript(context, ref, selectedItem),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                if (isImage)
-                  IconButton(
-                    icon: Icon(isInfoCollapsed.value ? Icons.expand_more : Icons.expand_less),
-                    tooltip: isInfoCollapsed.value ? 'Show information' : 'Hide information',
-                    onPressed: () {
-                      isInfoCollapsed.value = !isInfoCollapsed.value;
-                    },
-                  ),
-              ],
-            ),
-          ),
-
-          Expanded(
-            child:
-                isImage && isInfoCollapsed.value
-                    ? _buildFullImagePreview(selectedItem.path)
-                    : SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Information Section
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Information', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 12),
-                                _buildInfoItem(
-                                  'Type',
-                                  selectedItem.type == FileSystemItemType.directory
-                                      ? 'Directory'
-                                      : 'File (${selectedItem.fileExtension})',
-                                ),
-                                _buildInfoItem('Size', selectedItem.formattedSize),
-                                // Show subItemCount only for directories
-                                if (selectedItem.type == FileSystemItemType.directory)
-                                  _buildInfoItem('Contents', selectedItem.subItemCount.formattedCount),
-                                _buildInfoItem('Created', _formatDate(selectedItem.createdAt)),
-                                _buildInfoItem('Modified', _formatDate(selectedItem.modifiedAt)),
-                                _buildInfoItem('Location', _getParentPath(selectedItem.path)),
-                                if (selectedItem.type == FileSystemItemType.file)
-                                  _buildInfoItem(
-                                    'Extension',
-                                    selectedItem.fileExtension.isEmpty ? 'None' : selectedItem.fileExtension,
-                                  ),
-                              ],
-                            ),
-                          ),
-
-                          // Image Preview Section
-                          if (isImage) ...[
-                            const Divider(height: 1),
-                            Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Preview', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 16),
-                                  _buildImagePreview(selectedItem.path),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Image Preview(folded)
-  Widget _buildImagePreview(String imagePath) {
-    return Container(
-      alignment: Alignment.center,
-      constraints: const BoxConstraints(maxHeight: 300),
-      child: Image.file(
-        File(imagePath),
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(child: Text('Unable to load image', style: TextStyle(color: Colors.red)));
-        },
-      ),
-    );
-  }
-
-  // Image Preview(expanded)
-  Widget _buildFullImagePreview(String imagePath) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      alignment: Alignment.center,
-      child: Image.file(
-        File(imagePath),
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(child: Text('Unable to load image', style: TextStyle(color: Colors.red)));
-        },
-      ),
-    );
-  }
-
-  Widget _buildInfoItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(label, style: TextStyle(fontWeight: FontWeight.w500, color: Colors.grey.shade800)),
-          ),
-          Expanded(child: Text(value, style: const TextStyle(color: Colors.black87))),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime dateTime) {
-    final date = '${dateTime.day}/${dateTime.month}/${dateTime.year}';
-    final time = '${_padZero(dateTime.hour)}:${_padZero(dateTime.minute)}';
-    return '$date $time';
-  }
-
-  String _padZero(int number) {
-    return number.toString().padLeft(2, '0');
-  }
-
-  String _getParentPath(String filePath) {
-    final lastSeparator = filePath.lastIndexOf(Platform.pathSeparator);
-    if (lastSeparator <= 0) return filePath;
-    return filePath.substring(0, lastSeparator);
   }
 }

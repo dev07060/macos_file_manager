@@ -1,4 +1,14 @@
-part of '../home.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:gap/gap.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/constants/file_constants.dart';
+import 'package:macos_file_manager/model/file_system_item.dart';
+import 'package:macos_file_manager/providers/file_system_providers.dart';
+import 'package:macos_file_manager/src/drag_drop_items.dart';
+import 'package:macos_file_manager/src/home_event.dart';
+import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 class FileItem extends HookConsumerWidget with HomeEvent, DragDropItems {
   const FileItem({super.key, required this.item});
@@ -36,11 +46,11 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItems {
           child: Row(
             children: [
               Icon(
-                item.type == FileSystemItemType.directory ? Icons.folder : _getFileIcon(item.name),
+                item.type == FileSystemItemType.directory ? Icons.folder : FileConstants.getFileIcon(item.name),
                 color: item.type == FileSystemItemType.directory ? Colors.amber.shade800 : Colors.blueGrey,
                 size: 24,
               ),
-              const SizedBox(width: 12),
+              const Gap(12),
               Expanded(
                 child: Text(
                   item.name,
@@ -124,54 +134,5 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItems {
       },
       child: child,
     );
-  }
-}
-
-IconData _getFileIcon(String fileName) {
-  final extension = fileName.split('.').last.toLowerCase();
-
-  switch (extension) {
-    case 'sh':
-      return Icons.terminal;
-    case 'pdf':
-      return Icons.picture_as_pdf;
-    case 'jpg':
-    case 'jpeg':
-    case 'png':
-    case 'gif':
-    case 'bmp':
-    case 'svg':
-    case 'heic':
-      return Icons.image;
-    case 'mp3':
-    case 'wav':
-    case 'aac':
-    case 'flac':
-      return Icons.audio_file;
-    case 'mp4':
-    case 'mov':
-    case 'avi':
-    case 'mkv':
-      return Icons.video_file;
-    case 'doc':
-    case 'docx':
-    case 'txt':
-    case 'rtf':
-      return Icons.description;
-    case 'xls':
-    case 'xlsx':
-    case 'csv':
-      return Icons.table_chart;
-    case 'ppt':
-    case 'pptx':
-      return Icons.slideshow;
-    case 'zip':
-    case 'rar':
-    case '7z':
-    case 'tar':
-    case 'gz':
-      return Icons.archive;
-    default:
-      return Icons.insert_drive_file;
   }
 }
