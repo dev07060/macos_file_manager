@@ -7,8 +7,8 @@ import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:path/path.dart' as path;
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
-class DragDropItems {
-  static Future<DragItem?> createDragItemForFile(FileSystemItem fileItem) async {
+mixin class DragDropItems {
+  Future<DragItem?> createDragItemForFile(FileSystemItem fileItem) async {
     if (fileItem.type != FileSystemItemType.file) {
       return null;
     }
@@ -26,12 +26,7 @@ class DragDropItems {
     return dragItem;
   }
 
-  static Future<void> handleFileDrop(
-    WidgetRef ref,
-    BuildContext context,
-    PerformDropEvent event,
-    FileSystemItem item,
-  ) async {
+  Future<void> handleFileDrop(WidgetRef ref, BuildContext context, PerformDropEvent event, FileSystemItem item) async {
     // Get the target directory path
     final targetDirectoryPath = item.path;
 
@@ -68,12 +63,7 @@ class DragDropItems {
     await ref.read(fileSystemItemListProvider.notifier).loadDirectory(currentDir);
   }
 
-  static Future<void> _moveFiles(
-    WidgetRef ref,
-    BuildContext context,
-    List<String> sourcePaths,
-    String targetDirPath,
-  ) async {
+  Future<void> _moveFiles(WidgetRef ref, BuildContext context, List<String> sourcePaths, String targetDirPath) async {
     if (sourcePaths.isEmpty) return;
 
     try {

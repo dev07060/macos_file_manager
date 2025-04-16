@@ -1,6 +1,6 @@
 part of '../home.dart';
 
-class FileItem extends HookConsumerWidget with HomeEvent {
+class FileItem extends HookConsumerWidget with HomeEvent, DragDropItems {
   const FileItem({super.key, required this.item});
 
   final FileSystemItem item;
@@ -86,7 +86,7 @@ class FileItem extends HookConsumerWidget with HomeEvent {
 
         // If this item is not among selected items, only drag this item
         if (!selectedItems.contains(item)) {
-          return DragDropItems.createDragItemForFile(item);
+          return createDragItemForFile(item);
         }
 
         // Otherwise, create a drag item for all selected files
@@ -120,7 +120,7 @@ class FileItem extends HookConsumerWidget with HomeEvent {
         return event.session.allowedOperations.firstOrNull ?? DropOperation.none;
       },
       onPerformDrop: (event) async {
-        await DragDropItems.handleFileDrop(ref, context, event, item);
+        await handleFileDrop(ref, context, event, item);
       },
       child: child,
     );
