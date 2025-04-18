@@ -7,7 +7,7 @@ import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:path/path.dart' as path;
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
-mixin class DragDropItems {
+mixin class DragDropItemsEvent {
   Future<DragItem?> createDragItemForFile(FileSystemItem fileItem) async {
     if (fileItem.type != FileSystemItemType.file) {
       return null;
@@ -53,7 +53,6 @@ mixin class DragDropItems {
           await _moveFiles(ref, context, paths, targetDirectoryPath);
         }
       } catch (e) {
-        // Show error message
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to process dropped item: $e')));
       }
     }
@@ -92,10 +91,8 @@ mixin class DragDropItems {
                     ],
                   ),
             );
-
             if (shouldOverwrite != true) continue;
           }
-
           // Move file
           await sourceFile.rename(destinationPath);
         }

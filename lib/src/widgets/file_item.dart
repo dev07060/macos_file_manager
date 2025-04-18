@@ -7,11 +7,11 @@ import 'package:macos_file_manager/constants/file_constants.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
-import 'package:macos_file_manager/src/drag_drop_items.dart';
+import 'package:macos_file_manager/src/drag_drop_items_event.dart';
 import 'package:macos_file_manager/src/home_event.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
-class FileItem extends HookConsumerWidget with HomeEvent, DragDropItems {
+class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent {
   const FileItem({super.key, required this.item});
 
   final FileSystemItem item;
@@ -21,11 +21,8 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItems {
     final isHovered = useState(false);
     final isSelected = item.isSelected;
     final selectedCount = ref.watch(selectedItemsCountProvider);
-
-    // Use FocusNode to detect keyboard events
     final focusNode = useFocusNode();
 
-    // Widget for the file or folder item
     Widget itemWidget = Material(
       color: isSelected ? Colors.blue.withValues(alpha: .1) : Colors.transparent,
       child: MouseRegion(
@@ -33,7 +30,6 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItems {
         onExit: (_) => isHovered.value = false,
         child: InkWell(
           onTap: () {
-            // Get modifier key states
             final isShiftPressed =
                 HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shift) ||
                 HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
@@ -103,7 +99,6 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItems {
     return Focus(
       focusNode: focusNode,
       onKeyEvent: (node, event) {
-        // Handle key events
         if (event.logicalKey == LogicalKeyboardKey.shift ||
             event.logicalKey == LogicalKeyboardKey.control ||
             event.logicalKey == LogicalKeyboardKey.controlLeft ||

@@ -11,13 +11,11 @@ class DirectoryTreeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final treeState = ref.watch(treeViewNotifierProvider);
-
     return Container(
       color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더는 고정
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -34,28 +32,21 @@ class DirectoryTreeView extends ConsumerWidget {
             ),
           ),
           const Divider(),
-          // 트리 내용은 InteractiveViewer로 감싸기
           Expanded(
             child: InteractiveViewer(
               boundaryMargin: const EdgeInsets.all(100),
               minScale: 0.5,
               maxScale: 2.0,
-              constrained: false, // 컨테이너 크기에 제약받지 않도록
+              constrained: false,
               child: treeState.when(
                 data: (state) {
                   if (state.rootNode == null) {
                     return const Text('No directory structure');
                   }
                   return Container(
-                    width: 10000, // 충분히 큰 너비
-                    height: 10000, // 충분히 큰 높이
+                    constraints: BoxConstraints(minWidth: 600, maxWidth: 2000),
                     padding: const EdgeInsets.all(16.0),
-                    child: DirectoryNodeWidget(
-                      node: state.rootNode!,
-                      onNodeSelected: (path) {
-                        // 노드 선택 처리
-                      },
-                    ),
+                    child: DirectoryNodeWidget(node: state.rootNode!, onNodeSelected: (path) {}),
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
