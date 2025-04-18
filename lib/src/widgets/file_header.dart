@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/utils/file_utils.dart';
@@ -165,6 +167,9 @@ class ImageControlsWidget extends StatelessWidget {
   final ValueNotifier<bool> isCropping;
   final ValueNotifier<int> lastSavedAngle;
   final String imagePath;
+  final ValueNotifier<int> imageKey;
+
+  final Function()? onImageSaved;
 
   const ImageControlsWidget({
     super.key,
@@ -172,6 +177,8 @@ class ImageControlsWidget extends StatelessWidget {
     required this.isCropping,
     required this.lastSavedAngle,
     required this.imagePath,
+    required this.imageKey,
+    this.onImageSaved,
   });
 
   @override
@@ -193,10 +200,11 @@ class ImageControlsWidget extends StatelessWidget {
                   isCropping.value
                       ? null
                       : () {
-                        rotationAngle.value = (rotationAngle.value - 90) % 360;
-                        if (rotationAngle.value < 0) {
-                          rotationAngle.value += 360;
-                        }
+                        // 반시계 방향 (왼쪽) 회전
+                        int newAngle = (rotationAngle.value - 90) % 360;
+                        if (newAngle < 0) newAngle += 360;
+                        rotationAngle.value = newAngle;
+                        log('왼쪽 회전: ${rotationAngle.value}');
                       },
               isFirst: true,
             ),
@@ -207,7 +215,9 @@ class ImageControlsWidget extends StatelessWidget {
                   isCropping.value
                       ? null
                       : () {
+                        // 시계 방향 (오른쪽) 회전
                         rotationAngle.value = (rotationAngle.value + 90) % 360;
+                        log('오른쪽 회전: ${rotationAngle.value}');
                       },
             ),
             _buildSegmentedButton(
@@ -226,6 +236,12 @@ class ImageControlsWidget extends StatelessWidget {
                       : () async {
                         await ImageUtils.rotateAndSaveImage(imagePath, rotationAngle.value, context);
                         lastSavedAngle.value = rotationAngle.value;
+                        rotationAngle.value = 0;
+
+                        // 이미지 저장 후 새로고침
+                        if (onImageSaved != null) {
+                          onImageSaved!();
+                        }
                       },
               isLast: true,
             ),

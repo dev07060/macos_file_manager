@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/constants/file_constants.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
+import 'package:macos_file_manager/providers/tree_view_provider.dart';
 import 'package:macos_file_manager/src/drag_drop_items.dart';
 import 'package:macos_file_manager/src/home_event.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
@@ -17,6 +18,7 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItems {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isHovered = useState(false);
     final isSelected = item.isSelected;
     final selectedCount = ref.watch(selectedItemsCountProvider);
 
@@ -26,40 +28,72 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItems {
     // Widget for the file or folder item
     Widget itemWidget = Material(
       color: isSelected ? Colors.blue.withValues(alpha: .1) : Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          // Get modifier key states
-          final isShiftPressed =
-              HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shift) ||
-              HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
-              HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftRight);
+      child: MouseRegion(
+        onEnter: (_) => isHovered.value = true,
+        onExit: (_) => isHovered.value = false,
+        child: InkWell(
+          onTap: () {
+            // Get modifier key states
+            final isShiftPressed =
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shift) ||
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftLeft) ||
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shiftRight);
 
-          final isCtrlPressed =
-              HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.control) ||
-              HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.controlLeft) ||
-              HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.controlRight);
+            final isCtrlPressed =
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.control) ||
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.controlLeft) ||
+                HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.controlRight);
 
-          handleItemClick(ref, item, isShiftKeyPressed: isShiftPressed, isCtrlKeyPressed: isCtrlPressed);
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
+            handleItemClick(ref, item, isShiftKeyPressed: isShiftPressed, isCtrlKeyPressed: isCtrlPressed);
+          },
+          child: Stack(
             children: [
-              Icon(
-                item.type == FileSystemItemType.directory ? Icons.folder : FileConstants.getFileIcon(item.name),
-                color: item.type == FileSystemItemType.directory ? Colors.amber.shade800 : Colors.blueGrey,
-                size: 24,
-              ),
-              const Gap(12),
-              Expanded(
-                child: Text(
-                  item.name,
-                  style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
-                  overflow: TextOverflow.ellipsis,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      item.type == FileSystemItemType.directory ? Icons.folder : FileConstants.getFileIcon(item.name),
+                      color: item.type == FileSystemItemType.directory ? Colors.amber.shade800 : Colors.blueGrey,
+                      size: 24,
+                    ),
+                    const Gap(12),
+                    Expanded(
+                      child: Text(
+                        item.name,
+                        style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isSelected && selectedCount > 1) const Icon(Icons.check_circle, color: Colors.blue, size: 16),
+                  ],
                 ),
               ),
-              // Only show check icon if multiple items are selected
-              if (isSelected && selectedCount > 1) const Icon(Icons.check_circle, color: Colors.blue, size: 16),
+              // 디렉토리인 경우에만 호버 시 트리 뷰 아이콘 표시
+              if (item.type == FileSystemItemType.directory && isHovered.value)
+                Positioned(
+                  right: 16,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () {
+                          ref.read(treeViewNotifierProvider.notifier).showTreeView(item.path);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: .1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Icon(Icons.account_tree, size: 16, color: Colors.black54),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
