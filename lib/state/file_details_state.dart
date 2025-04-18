@@ -1,5 +1,3 @@
-// lib/src/widgets/file_details/state/file_details_state.dart
-
 import 'package:flutter/material.dart';
 
 class FileDetailsState {
@@ -7,7 +5,7 @@ class FileDetailsState {
   final ValueNotifier<int> rotationAngle;
   final ValueNotifier<bool> isEditingFilename;
   final ValueNotifier<int> lastSavedAngle;
-  final ValueNotifier<bool> isCropping; // 추가
+  final ValueNotifier<bool> isCropping;
   final TextEditingController textEditingController;
   final FocusNode focusNode;
 
@@ -16,7 +14,7 @@ class FileDetailsState {
       rotationAngle = ValueNotifier(0),
       isEditingFilename = ValueNotifier(false),
       lastSavedAngle = ValueNotifier(0),
-      isCropping = ValueNotifier(false), // 추가
+      isCropping = ValueNotifier(false),
       textEditingController = TextEditingController(),
       focusNode = FocusNode();
 
@@ -25,7 +23,7 @@ class FileDetailsState {
     rotationAngle.dispose();
     isEditingFilename.dispose();
     lastSavedAngle.dispose();
-    isCropping.dispose(); // 추가
+    isCropping.dispose();
     textEditingController.dispose();
     focusNode.dispose();
   }

@@ -1,5 +1,3 @@
-// lib/src/widgets/file_details/widgets/image_preview_widget.dart
-
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
@@ -14,6 +12,8 @@ class ImagePreview extends StatelessWidget {
   final bool isFullView;
   final ValueNotifier<int> rotationAngle;
   final ValueNotifier<bool> isCropping;
+  final ValueNotifier<int> imageKey;
+  final VoidCallback onCropComplete;
 
   const ImagePreview({
     super.key,
@@ -21,6 +21,8 @@ class ImagePreview extends StatelessWidget {
     required this.isFullView,
     required this.rotationAngle,
     required this.isCropping,
+    required this.imageKey,
+    required this.onCropComplete,
   });
 
   @override
@@ -35,14 +37,17 @@ class ImagePreview extends StatelessWidget {
     return Container(
       alignment: Alignment.center,
       constraints: const BoxConstraints(maxHeight: 300),
-      child: Image.file(
-        File(imagePath),
-        fit: BoxFit.contain,
-        cacheWidth: null,
-        key: ValueKey(DateTime.now()),
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(child: Text('Unable to load image', style: TextStyle(color: Colors.red)));
-        },
+      child: Transform.rotate(
+        angle: rotationAngle.value * math.pi / 180,
+        child: Image.file(
+          File(imagePath),
+          fit: BoxFit.contain,
+          cacheWidth: null,
+          key: ValueKey('image_${imageKey.value}'),
+          errorBuilder: (context, error, stackTrace) {
+            return const Center(child: Text('Unable to load image', style: TextStyle(color: Colors.red)));
+          },
+        ),
       ),
     );
   }
@@ -56,28 +61,31 @@ class ImagePreview extends StatelessWidget {
   Widget _buildCroppingView(GlobalKey<ExtendedImageEditorState> editorKey, BuildContext context) {
     return Stack(
       children: [
-        ExtendedImage.file(
-          File(imagePath),
-          fit: BoxFit.contain,
-          mode: ExtendedImageMode.editor,
-          enableLoadState: true,
-          initEditorConfigHandler: (state) {
-            return EditorConfig(
-              maxScale: 8.0,
-              cropRectPadding: const EdgeInsets.all(20.0),
-              hitTestSize: 20.0,
-              cropAspectRatio: 3 / 2,
-              cornerColor: Colors.white,
-              lineColor: Colors.white,
-            );
-          },
-          extendedImageEditorKey: editorKey,
-          loadStateChanged: (state) {
-            if (state.extendedImageLoadState == LoadState.failed) {
-              return const Center(child: Text('Unable to load image', style: TextStyle(color: Colors.red)));
-            }
-            return null;
-          },
+        Transform.rotate(
+          angle: rotationAngle.value * math.pi / 180,
+          child: ExtendedImage.file(
+            File(imagePath),
+            fit: BoxFit.contain,
+            mode: ExtendedImageMode.editor,
+            enableLoadState: true,
+            initEditorConfigHandler: (state) {
+              return EditorConfig(
+                maxScale: 8.0,
+                cropRectPadding: const EdgeInsets.all(20.0),
+                hitTestSize: 20.0,
+                cropAspectRatio: 3 / 2,
+                cornerColor: Colors.white,
+                lineColor: Colors.white,
+              );
+            },
+            extendedImageEditorKey: editorKey,
+            loadStateChanged: (state) {
+              if (state.extendedImageLoadState == LoadState.failed) {
+                return const Center(child: Text('Unable to load image', style: TextStyle(color: Colors.red)));
+              }
+              return null;
+            },
+          ),
         ),
         Positioned(
           bottom: 16,
@@ -123,7 +131,7 @@ class ImagePreview extends StatelessWidget {
                 File(imagePath),
                 fit: BoxFit.contain, // contain으로 변경
                 cacheWidth: null,
-                key: ValueKey(DateTime.now()),
+                key: ValueKey('image_${imageKey.value}'),
                 errorBuilder: (context, error, stackTrace) {
                   return const Center(child: Text('Unable to load image', style: TextStyle(color: Colors.red)));
                 },
@@ -163,7 +171,7 @@ class ImagePreview extends StatelessWidget {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image cropped and saved successfully')));
     }
-
+    onCropComplete();
     isCropping.value = false;
   }
 }
