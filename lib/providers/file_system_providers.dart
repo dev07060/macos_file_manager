@@ -48,16 +48,9 @@ class DirectoryHistory {
 
   DirectoryHistory({required this.history, required this.currentIndex});
 
-  // Check if it's possible to go back in the history
   bool get canGoBack => currentIndex > 0;
-
-  // Check if it's possible to go forward in the history
   bool get canGoForward => currentIndex < history.length - 1;
-
-  // Check if it's possible to go to the upper directory
   bool get canGoUpperDir => currentPath != '/';
-
-  // Get the current path
   String get currentPath => history[currentIndex];
 
   // Create a copy of the directory history with optional changes
@@ -73,29 +66,23 @@ class DirectoryHistoryNotifier extends StateNotifier<DirectoryHistory> {
   // Navigate to a new path
   void navigateTo(String path) {
     if (path == state.currentPath) return;
-
-    // If we're not at the end of the history, truncate it
     final newHistory = state.history.sublist(0, state.currentIndex + 1);
     newHistory.add(path);
-
     state = state.copyWith(history: newHistory, currentIndex: newHistory.length - 1);
   }
 
-  // Go back in the history
   void goBack() {
     if (state.canGoBack) {
       state = state.copyWith(currentIndex: state.currentIndex - 1);
     }
   }
 
-  // Go forward in the history
   void goForward() {
     if (state.canGoForward) {
       state = state.copyWith(currentIndex: state.currentIndex + 1);
     }
   }
 
-  // Go to the upper directory
   void goUp() {
     final parent = path.dirname(state.currentPath);
     if (parent != state.currentPath) {

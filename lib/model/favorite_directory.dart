@@ -1,6 +1,3 @@
-import 'package:flutter/foundation.dart' show immutable;
-
-@immutable
 class FavoriteDirectory {
   const FavoriteDirectory({
     required this.path,

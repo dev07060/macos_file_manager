@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/directory_node.dart';
@@ -19,6 +21,7 @@ class DirectoryNodeWidget extends ConsumerWidget {
     // List of keys to track the actual height of the nodes
     final List<GlobalKey> childKeys = node.isExpanded ? List.generate(node.children.length, (_) => GlobalKey()) : [];
     ref.watch(treeViewUpdateProvider);
+    log(indentation.toString());
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,12 +56,10 @@ class DirectoryNodeWidget extends ConsumerWidget {
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: () {
-                      // 토글 상태 변경
                       ref.read(treeViewNotifierProvider.notifier).toggleNode(node.path);
-                      // 트리 뷰 업데이트 상태 변경 (업데이트 강제 트리거)
                       ref.read(treeViewUpdateProvider.notifier).state++;
                     },
-                    child: Icon(node.isExpanded ? Icons.chevron_right : Icons.expand_more, size: 16),
+                    child: Icon(node.isExpanded ? Icons.chevron_right : Icons.expand_more, size: 20),
                   ),
                 ],
               ],

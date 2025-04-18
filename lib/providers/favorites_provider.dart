@@ -8,19 +8,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const String _favoritesKey = 'favorites_list';
 
-List<FavoriteDirectory> _getDefaultFavorites() {
-  final homeDir = Platform.environment['HOME'];
-  if (homeDir == null) return [];
-
-  return [
-    FavoriteDirectory(path: '$homeDir/Desktop', name: 'Desktop', isSystem: true),
-    FavoriteDirectory(path: '$homeDir/Documents', name: 'Documents', isSystem: true),
-    FavoriteDirectory(path: '$homeDir/Downloads', name: 'Downloads', isSystem: true),
-  ];
-}
-
 class FavoritesNotifier extends StateNotifier<List<FavoriteDirectory>> {
   final SharedPreferences _prefs;
+  List<FavoriteDirectory> _getDefaultFavorites() {
+    final homeDir = Platform.environment['HOME'];
+    if (homeDir == null) return [];
+
+    return [
+      FavoriteDirectory(path: '$homeDir/Desktop', name: 'Desktop', isSystem: true),
+      FavoriteDirectory(path: '$homeDir/Documents', name: 'Documents', isSystem: true),
+      FavoriteDirectory(path: '$homeDir/Downloads', name: 'Downloads', isSystem: true),
+    ];
+  }
 
   FavoritesNotifier(this._prefs) : super([]) {
     _loadFavorites();
