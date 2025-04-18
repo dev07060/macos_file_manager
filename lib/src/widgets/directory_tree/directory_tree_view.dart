@@ -3,6 +3,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
 import 'package:macos_file_manager/src/widgets/directory_tree/directory_node.dart';
 
+// 트리 뷰의 최대 넓이를 추적하는 provider
+final treeWidthProvider = StateProvider<double>((ref) => 300.0); // 기본값으로 300 지정
+
 class DirectoryTreeView extends ConsumerWidget {
   final String rootPath;
 
@@ -11,6 +14,7 @@ class DirectoryTreeView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final treeState = ref.watch(treeViewNotifierProvider);
+    final treeWidth = ref.watch(treeWidthProvider);
 
     return Container(
       color: Colors.white,
@@ -46,15 +50,35 @@ class DirectoryTreeView extends ConsumerWidget {
                   if (state.rootNode == null) {
                     return const Text('No directory structure');
                   }
-                  return Container(
-                    width: 10000, // 충분히 큰 너비
-                    height: 10000, // 충분히 큰 높이
-                    padding: const EdgeInsets.all(16.0),
-                    child: DirectoryNodeWidget(
-                      node: state.rootNode!,
-                      onNodeSelected: (path) {
-                        // 노드 선택 처리
-                      },
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: 300, // 최소 너비 설정
+                        maxWidth: MediaQuery.of(context).size.width * 3, // 화면 너비의 3배로 제한 확장
+                      ),
+                      child: SingleChildScrollView(
+                        child: Container(
+                          width: treeWidth, // 동적으로 계산된 넓이 사용
+                          padding: const EdgeInsets.all(16.0),
+                          child: DirectoryNodeWidget(
+                            node: state.rootNode!,
+                            onNodeSelected: (path) {
+                              // 노드 선택 처리
+                            },
+                            // 최대 넓이 갱신 콜백 전달
+                            updateMaxWidth: (maxWidth) {
+                              // 기존 넓이보다 큰 경우에만 업데이트 (최대 화면 너비의 3배까지만)
+                              final maxAllowedWidth = MediaQuery.of(context).size.width * 3;
+                              final newWidth = maxWidth + 50 < maxAllowedWidth ? maxWidth + 50 : maxAllowedWidth;
+
+                              if (newWidth > ref.read(treeWidthProvider)) {
+                                ref.read(treeWidthProvider.notifier).state = newWidth;
+                              }
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   );
                 },
