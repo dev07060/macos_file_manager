@@ -26,9 +26,9 @@ mixin class DragDropItemsEvent {
     return dragItem;
   }
 
-  Future<void> handleFileDrop(WidgetRef ref, BuildContext context, PerformDropEvent event, FileSystemItem item) async {
+  Future<void> handleFileDrop(WidgetRef ref, BuildContext context, PerformDropEvent event, String itemPath) async {
     // Get the target directory path
-    final targetDirectoryPath = item.path;
+    final targetDirectoryPath = itemPath;
 
     // Get all items from the drop session
     for (final dropItem in event.session.items) {

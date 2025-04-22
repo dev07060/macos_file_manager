@@ -3,26 +3,26 @@ import 'dart:io';
 
 import 'package:path/path.dart';
 
-class DirectoryNode {
+class DirectoryNodeData {
   final String name;
   final String path;
-  final List<DirectoryNode> children;
+  final List<DirectoryNodeData> children;
   bool isExpanded;
   bool isSelected;
 
-  DirectoryNode({
+  DirectoryNodeData({
     required this.name,
     required this.path,
-    List<DirectoryNode>? children,
+    List<DirectoryNodeData>? children,
     this.isExpanded = false,
     this.isSelected = false,
   }) : children = children ?? [];
 
-  static Future<DirectoryNode> fromDirectory(String dirPath) async {
+  static Future<DirectoryNodeData> fromDirectory(String dirPath) async {
     final dir = Directory(dirPath);
     final name = basename(dirPath);
 
-    List<DirectoryNode> children = [];
+    List<DirectoryNodeData> children = [];
 
     try {
       await for (final entity in dir.list(followLinks: false)) {
@@ -38,6 +38,6 @@ class DirectoryNode {
       log('Error loading directory: $e');
     }
 
-    return DirectoryNode(name: name, path: dirPath, children: children);
+    return DirectoryNodeData(name: name, path: dirPath, children: children);
   }
 }

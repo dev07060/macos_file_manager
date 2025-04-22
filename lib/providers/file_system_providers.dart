@@ -18,6 +18,9 @@ final selectedFileItemProvider = StateProvider<FileSystemItem?>((ref) => null);
 // Provider for the last selected path
 final lastSelectedPathProvider = StateProvider<String?>((ref) => null);
 
+// Provider for searching files in treeview
+final searchQueryProvider = StateProvider<String?>((ref) => null);
+
 // Provider for the count of selected items
 final selectedItemsCountProvider = Provider<int>((ref) {
   final items = ref.watch(fileSystemItemListProvider);

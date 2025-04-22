@@ -20,7 +20,6 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent {
   Widget build(BuildContext context, WidgetRef ref) {
     final isHovered = useState(false);
     final isSelected = item.isSelected;
-    final selectedCount = ref.watch(selectedItemsCountProvider);
     final focusNode = useFocusNode();
 
     Widget itemWidget = Material(
@@ -61,11 +60,9 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (isSelected && selectedCount > 1) const Icon(Icons.check_circle, color: Colors.blue, size: 16),
                   ],
                 ),
               ),
-              // 디렉토리인 경우에만 호버 시 트리 뷰 아이콘 표시
               if (item.type == FileSystemItemType.directory && isHovered.value)
                 Positioned(
                   right: 16,
@@ -159,7 +156,7 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent {
         return event.session.allowedOperations.firstOrNull ?? DropOperation.none;
       },
       onPerformDrop: (event) async {
-        await handleFileDrop(ref, context, event, item);
+        await handleFileDrop(ref, context, event, item.path);
       },
       child: child,
     );

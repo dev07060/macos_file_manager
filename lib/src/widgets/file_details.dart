@@ -14,6 +14,7 @@ import 'package:macos_file_manager/src/widgets/image_preview.dart';
 import 'package:macos_file_manager/utils/file_utils.dart';
 import 'package:macos_file_manager/utils/image_utils.dart';
 
+/// Widget that displays the details of a file, including its header, information, and preview.
 class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
   FileDetails({super.key});
 
@@ -21,32 +22,32 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedItem = selectedFileItem(ref);
     final treeViewState = ref.watch(treeViewNotifierProvider);
-
-    final imageKey = useState(0); // 이미지 새로고침을 위한 키 추가
-
-    // 개별적으로 상태 관리
-    final isInfoCollapsed = useState(false);
-    final rotationAngle = useState(0);
-    final isEditingFilename = useState(false);
-    final lastSavedAngle = useState(0);
-    final isCropping = useState(false);
     final textEditingController = useTextEditingController();
     final focusNode = useFocusNode();
 
-    // 이미지 크롭 완료 후 처리하는 함수
+    // Individual state management
+    final isInfoCollapsed = useState(false);
+    final isCropping = useState(false);
+    final isEditingFilename = useState(false);
+
+    final rotationAngle = useState(0);
+    final lastSavedAngle = useState(0);
+    final imageKey = useState(0);
+
+    // Function to handle crop completion after image cropping
     Future<void> handleCropComplete() async {
-      // 이미지 캐시 클리어
+      // Clear image cache
       imageCache.clear();
       imageCache.clearLiveImages();
 
-      // 이미지 키 증가시켜 새로고침
+      // Increase the image key to trigger refresh
       imageKey.value++;
       isCropping.value = false;
     }
 
     useEffect(() {
       if (selectedItem != null && FileUtils.isImageFile(selectedItem)) {
-        // 저장된 회전 상태 로드
+        // Load the saved rotation angle
         ImageUtils.getCurrentRotation(selectedItem.path).then((angle) {
           rotationAngle.value = angle;
           lastSavedAngle.value = angle;
@@ -55,7 +56,7 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
       return null;
     }, [selectedItem]);
 
-    // 포커스 리스너 설정
+    // Set up focus listener
     useEffect(() {
       void onFocusChange() {
         if (!focusNode.hasFocus && isEditingFilename.value) {
@@ -67,22 +68,22 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
       return () => focusNode.removeListener(onFocusChange);
     }, [focusNode]);
 
-    // 트리 뷰 상태 처리
+    // Handle the tree view state
     return treeViewState.when(
       data: (state) {
-        // 트리 뷰가 활성화되어 있으면 선택된 아이템 유무와 관계없이 트리 뷰 표시
+        // If the tree view is active, show the directory tree regardless of the selected item
         if (state.isTreeViewActive) {
           return DirectoryTreeView(rootPath: state.rootPath!);
         }
 
-        // 트리 뷰가 비활성화 상태일 때만 선택된 아이템 체크
+        // If the tree view is inactive, check if a file is selected
         if (selectedItem == null) {
           return const Center(child: Text('No file selected', style: TextStyle(fontSize: 16, color: Colors.grey)));
         }
         final isShellScript = FileUtils.isShellScript(selectedItem);
         final isImage = FileUtils.isImageFile(selectedItem);
 
-        // 기존 파일 상세 정보 표시
+        // Show the file details
         return MouseRegion(
           child: Container(
             color: Colors.white,
@@ -105,7 +106,7 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
                         renameFileSystemItem(ref, selectedItem, newName, context);
                       },
                     ),
-                    // 디렉토리인 경우에만 트리 뷰 버튼 표시
+                    // Show the tree view button only for directories
                     if (selectedItem.type == FileSystemItemType.directory)
                       Positioned(right: 16, top: 8, child: _buildTreeViewButton(ref, selectedItem)),
                   ],
@@ -185,11 +186,12 @@ class FileDetails extends HookConsumerWidget with HomeState, HomeEvent {
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Center(child: CircularProgressIndicator.adaptive()),
       error: (error, stack) => Center(child: Text('Error: $error')),
     );
   }
 
+  /// Builds the tree view button for the given [item].
   Widget _buildTreeViewButton(WidgetRef ref, FileSystemItem item) {
     return HoverBuilder(
       builder: (context, isHovered) {

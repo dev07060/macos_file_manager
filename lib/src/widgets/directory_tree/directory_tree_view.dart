@@ -1,16 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/model/directory_node_data.dart';
+import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
 import 'package:macos_file_manager/src/widgets/directory_tree/directory_node.dart';
+import 'package:macos_file_manager/src/widgets/search_bar.dart';
 
-class DirectoryTreeView extends ConsumerWidget {
+class DirectoryTreeView extends HookConsumerWidget {
   final String rootPath;
 
-  const DirectoryTreeView({super.key, required this.rootPath});
+  DirectoryTreeView({super.key, required this.rootPath});
+
+  final TextEditingController searchController = useTextEditingController();
+
+  List<String> collectAllPaths(DirectoryNodeData? node) {
+    if (node == null) return [];
+    List<String> paths = [node.path];
+    for (final child in node.children) {
+      paths.addAll(collectAllPaths(child));
+    }
+    return paths;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final treeViewProvider = ref.read(treeViewNotifierProvider.notifier);
+
     final treeState = ref.watch(treeViewNotifierProvider);
+    final searchQuery = ref.watch(searchQueryProvider);
+
+    List<String> allPaths = [];
+    treeState.when(
+      data: (state) {
+        allPaths = collectAllPaths(state.rootNode);
+      },
+      error: (error, stackTrace) {},
+      loading: () {
+        return const Center(child: CircularProgressIndicator.adaptive());
+      },
+    );
+
+    final filteredPaths =
+        searchQuery == null ? [] : allPaths.where((p) => p.split('/').last.contains(searchQuery)).toList();
+
     return Container(
       color: Colors.white,
       child: Column(
@@ -21,18 +54,65 @@ class DirectoryTreeView extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Directory Tree: $rootPath'),
+                Expanded(
+                  child: FSearchBar(
+                    variant: FSearchBarVariant.normal,
+                    hintText: 'Search',
+                    controller: searchController,
+                    onChanged: (value) {
+                      if (value.isEmpty) {
+                        ref.read(searchQueryProvider.notifier).state = null;
+                      } else {
+                        ref.read(searchQueryProvider.notifier).state = value;
+                      }
+                    },
+                    onClear: () {
+                      ref.read(searchQueryProvider.notifier).state = null;
+                    },
+                  ),
+                ),
                 IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () {
-                    ref.read(treeViewNotifierProvider.notifier).hideTreeView();
+                    treeViewProvider.hideTreeView();
                   },
                 ),
               ],
             ),
           ),
-          const Divider(),
+
+          searchController.text.isNotEmpty || searchController.text != '' || filteredPaths.isNotEmpty
+              ? Expanded(
+                flex: 2,
+                child: Container(
+                  margin: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300)),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                    itemCount: filteredPaths.length,
+                    itemExtent: 30,
+                    itemBuilder: (context, index) {
+                      final path = filteredPaths[index];
+                      // Split and filter empty segments in one step
+                      final segments = path.split('/').where((String e) => e.isNotEmpty).toList();
+                      final shortPath =
+                          segments.length >= 3 ? segments.sublist(segments.length - 3).join('/') : segments.join('/');
+                      return GestureDetector(
+                        onTap: () {
+                          treeViewProvider.collapseAll();
+                          treeViewProvider.expandPath(path);
+                          treeViewProvider.selectNode(path);
+                          ref.read(currentDirectoryProvider.notifier).state = path;
+                        },
+                        child: Text(shortPath, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
+                      );
+                    },
+                  ),
+                ),
+              )
+              : SizedBox.shrink(),
           Expanded(
+            flex: 8,
             child: InteractiveViewer(
               boundaryMargin: const EdgeInsets.all(100),
               minScale: 0.5,
@@ -46,10 +126,15 @@ class DirectoryTreeView extends ConsumerWidget {
                   return Container(
                     constraints: BoxConstraints(minWidth: 600, maxWidth: 2000),
                     padding: const EdgeInsets.all(16.0),
-                    child: DirectoryNodeWidget(node: state.rootNode!, onNodeSelected: (path) {}),
+                    child: DirectoryNodeWidget(
+                      node: state.rootNode!,
+                      onNodeSelected: (path) {
+                        ref.read(treeViewNotifierProvider.notifier).selectNode(path);
+                      },
+                    ),
                   );
                 },
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator.adaptive()),
                 error: (error, stack) => Center(child: Text('Error: $error')),
               ),
             ),

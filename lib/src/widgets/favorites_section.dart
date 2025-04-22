@@ -127,7 +127,7 @@ class FavoritesSection extends HookConsumerWidget with HomeEvent, DragDropItemsE
           isSelected: false,
         );
         // Handle file drop as if it was dropped on a regular folder
-        await handleFileDrop(ref, context, event, favoriteItem);
+        await handleFileDrop(ref, context, event, favoriteItem.path);
       },
       child: child,
     );

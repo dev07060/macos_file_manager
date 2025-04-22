@@ -313,7 +313,9 @@ mixin class HomeEvent {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          content: Row(children: [const CircularProgressIndicator(), const SizedBox(width: 20), const Text('압축 중...')]),
+          content: Row(
+            children: [const CircularProgressIndicator.adaptive(), const SizedBox(width: 20), const Text('압축 중...')],
+          ),
         );
       },
     );
@@ -503,7 +505,9 @@ mixin class HomeEvent {
       barrierDismissible: false,
       builder:
           (context) => const AlertDialog(
-            content: Row(children: [CircularProgressIndicator(), SizedBox(width: 20), Text('Running shell script...')]),
+            content: Row(
+              children: [CircularProgressIndicator.adaptive(), SizedBox(width: 20), Text('Running shell script...')],
+            ),
           ),
     );
 

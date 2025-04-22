@@ -1,11 +1,11 @@
 import 'dart:ui';
 
-import 'package:macos_file_manager/model/directory_node.dart';
+import 'package:macos_file_manager/model/directory_node_data.dart';
 
 class TreeViewState {
   final bool isTreeViewActive;
   final String? rootPath;
-  final DirectoryNode? rootNode;
+  final DirectoryNodeData? rootNode;
   final Offset dragOffset; // 드래그 위치 저장
 
   const TreeViewState({
@@ -15,7 +15,7 @@ class TreeViewState {
     this.dragOffset = Offset.zero,
   });
 
-  TreeViewState copyWith({bool? isTreeViewActive, String? rootPath, DirectoryNode? rootNode, Offset? dragOffset}) {
+  TreeViewState copyWith({bool? isTreeViewActive, String? rootPath, DirectoryNodeData? rootNode, Offset? dragOffset}) {
     return TreeViewState(
       isTreeViewActive: isTreeViewActive ?? this.isTreeViewActive,
       rootPath: rootPath ?? this.rootPath,

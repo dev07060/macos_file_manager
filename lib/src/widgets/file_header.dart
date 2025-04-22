@@ -53,6 +53,7 @@ class FileHeader extends StatelessWidget {
                   onTap: () {
                     if (!isEditingFilename.value) {
                       isEditingFilename.value = true;
+                      textEditingController.text = item.name;
                       Future.microtask(() => focusNode.requestFocus());
                     }
                   },
