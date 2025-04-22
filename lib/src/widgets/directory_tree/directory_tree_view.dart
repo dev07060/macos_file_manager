@@ -57,7 +57,7 @@ class DirectoryTreeView extends HookConsumerWidget {
                 Expanded(
                   child: FSearchBar(
                     variant: FSearchBarVariant.normal,
-                    hintText: 'Search',
+                    hintText: 'You can search directory name here within the tree',
                     controller: searchController,
                     onChanged: (value) {
                       if (value.isEmpty) {
@@ -87,27 +87,36 @@ class DirectoryTreeView extends HookConsumerWidget {
                 child: Container(
                   margin: const EdgeInsets.all(8.0),
                   decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300)),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                    itemCount: filteredPaths.length,
-                    itemExtent: 30,
-                    itemBuilder: (context, index) {
-                      final path = filteredPaths[index];
-                      // Split and filter empty segments in one step
-                      final segments = path.split('/').where((String e) => e.isNotEmpty).toList();
-                      final shortPath =
-                          segments.length >= 3 ? segments.sublist(segments.length - 3).join('/') : segments.join('/');
-                      return GestureDetector(
-                        onTap: () {
-                          treeViewProvider.collapseAll();
-                          treeViewProvider.expandPath(path);
-                          treeViewProvider.selectNode(path);
-                          ref.read(currentDirectoryProvider.notifier).state = path;
-                        },
-                        child: Text(shortPath, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400)),
-                      );
-                    },
-                  ),
+                  child:
+                      filteredPaths.isEmpty
+                          ? Center(child: (Text('No results found')))
+                          : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+                            itemCount: filteredPaths.length,
+                            itemExtent: 30,
+                            itemBuilder: (context, index) {
+                              final path = filteredPaths[index];
+                              final segments = path.split('/').where((String e) => e.isNotEmpty).toList();
+                              final shortPath =
+                                  segments.length >= 3
+                                      ? segments.sublist(segments.length - 3).join('/')
+                                      : segments.join('/');
+                              return InkWell(
+                                onTap: () async {
+                                  treeViewProvider.collapseAll();
+                                  await ref.read(fileSystemItemListProvider.notifier).loadDirectory(path);
+                                  treeViewProvider.expandPath(path);
+                                  treeViewProvider.selectNode(path);
+                                  ref.read(currentDirectoryProvider.notifier).state = path;
+                                  ref.read(directoryHistoryProvider.notifier).navigateTo(path);
+                                },
+                                child: Text(
+                                  shortPath,
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w400),
+                                ),
+                              );
+                            },
+                          ),
                 ),
               )
               : SizedBox.shrink(),

@@ -115,7 +115,7 @@ class FSearchBar extends StatelessWidget {
                 onTap: onTap,
                 decoration: InputDecoration(
                   hintText: hintText,
-                  // hintStyle: FTextStyles.bodyL.r.copyWith(color: FColors.of(context).labelAssistive),
+                  hintStyle: TextStyle(color: Colors.grey[500]!),
                   border: outlinedInputBorder(Colors.grey[200]!),
                   enabledBorder: outlinedInputBorder(Colors.grey[200]!),
                   focusedBorder: outlinedInputBorder(Colors.grey[200]!),
