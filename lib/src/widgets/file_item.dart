@@ -73,6 +73,7 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent {
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
                         onTap: () {
+                          ref.read(searchQueryProvider.notifier).state = null;
                           ref.read(treeViewNotifierProvider.notifier).showTreeView(item.path);
                         },
                         child: Container(

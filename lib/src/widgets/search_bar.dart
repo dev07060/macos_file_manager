@@ -133,19 +133,22 @@ class FSearchBar extends StatelessWidget {
                           ? null
                           : Padding(
                             padding: const EdgeInsets.only(right: 12),
-                            child: GestureDetector(
+                            child: InkWell(
                               onTap: () {
                                 controller.clear();
                                 onClear?.call();
                               },
                               child: SizedBox(
-                                width: iconSize,
+                                width: 50,
                                 height: iconSize,
                                 child: Center(
-                                  child: Icon(
-                                    Icons.arrow_circle_left_outlined,
-                                    size: iconSize,
-                                    color: Colors.grey[500]!,
+                                  child: Text(
+                                    'Clear',
+                                    style: TextStyle(
+                                      color: Colors.grey[500]!,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
                               ),

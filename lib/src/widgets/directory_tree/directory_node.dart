@@ -32,6 +32,7 @@ class DirectoryNodeWidget extends ConsumerWidget with DragDropItemsEvent, HomeSt
     // List of keys to track the actual height of the nodes
     final List<GlobalKey> childKeys = node.isExpanded ? List.generate(node.children.length, (_) => GlobalKey()) : [];
     ref.watch(treeViewUpdateProvider);
+    final size = MediaQuery.of(context).size;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,7 +56,10 @@ class DirectoryNodeWidget extends ConsumerWidget with DragDropItemsEvent, HomeSt
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(
+                  color: node.isSelected ? Colors.orange : Colors.grey.shade300,
+                  width: node.isSelected ? 2 : 1,
+                ),
                 boxShadow: [BoxShadow(color: Colors.grey.shade300, blurRadius: 4, offset: const Offset(0, 2))],
               ),
               child: Row(
@@ -64,6 +68,44 @@ class DirectoryNodeWidget extends ConsumerWidget with DragDropItemsEvent, HomeSt
                   Icon(Icons.folder, size: 16, color: Colors.amber.shade800),
                   const SizedBox(width: 8),
                   InkWell(
+                    onSecondaryTap: () {
+                      // macOS에서 마우스 오른쪽 클릭 시 동작
+                      // 예시: 컨텍스트 메뉴 표시, 노드 정보 출력 등
+                      showMenu(
+                        context: context,
+                        position: RelativeRect.fromLTRB(size.width / 2, size.height - 100, size.width / 2, 0),
+                        items: [
+                          PopupMenuItem(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: Center(
+                              child: Center(
+                                child: RichText(
+                                  text: TextSpan(
+                                    text: 'Tree View from ',
+                                    style: const TextStyle(color: Colors.black, fontSize: 14),
+                                    children: [
+                                      TextSpan(
+                                        text: node.name,
+                                        style: const TextStyle(
+                                          color: Colors.orange,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            onTap: () {
+                              ref.read(searchQueryProvider.notifier).state = null;
+                              ref.read(treeViewNotifierProvider.notifier).showTreeView(node.path);
+                            },
+                          ),
+                          // 추가 메뉴 항목...
+                        ],
+                      );
+                    },
                     onTap: () async {
                       await ref.read(fileSystemItemListProvider.notifier).loadDirectory(node.path);
                       ref.read(currentDirectoryProvider.notifier).state = node.path;
