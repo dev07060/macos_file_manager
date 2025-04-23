@@ -5,11 +5,11 @@ import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/favorites_provider.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/src/drag_drop_items_event.dart';
-import 'package:macos_file_manager/src/home_event.dart';
+import 'package:macos_file_manager/src/navigation_event.dart';
 import 'package:path/path.dart' as path;
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
-class FavoritesSection extends HookConsumerWidget with HomeEvent, DragDropItemsEvent {
+class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDropItemsEvent {
   const FavoritesSection({super.key});
 
   static const double _maxCollapsedHeight = 216; // (40 * 5 + 16)

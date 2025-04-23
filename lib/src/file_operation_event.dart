@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
@@ -6,56 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
-import 'package:macos_file_manager/utils/dialog_utils.dart';
 import 'package:path/path.dart' as path;
 
-mixin class HomeEvent {
-  ///
-  /// Get the path to the Desktop directory using Platform.environment
-  ///
-  Future<String?> getDesktopPath() async {
-    if (Platform.isMacOS) {
-      try {
-        String? homeDir;
-        if (Platform.isMacOS || Platform.isLinux) {
-          homeDir = Platform.environment['HOME'];
-        } else if (Platform.isWindows) {
-          homeDir = Platform.environment['USERPROFILE'];
-        }
-
-        if (homeDir != null) {
-          final desktopPath = path.join(homeDir, 'Desktop');
-          final desktopDir = Directory(desktopPath);
-          if (await desktopDir.exists()) {
-            log('Attempting to access (Platform.environment): $desktopPath');
-            log('Desktop exists (Platform.environment): true');
-            return desktopPath;
-          } else {
-            log('Desktop does not exist at (Platform.environment): $desktopPath');
-            return homeDir; // If the desktop folder doesn't exist, return the home directory
-          }
-        } else {
-          log('Could not get home directory using Platform.environment');
-          return '/'; // Fallback to the default path if failed to get the home directory
-        }
-      } catch (e) {
-        log('Error getting desktop path with Platform.environment: $e');
-        return '/'; // Fallback to the default path if an error occurred
-      }
-    } else {
-      // If it's not macOS, keep the existing method (modify as needed)
-      final desktopPath = '/Users/${Platform.environment['USER']}/Desktop';
-      final directory = Directory(desktopPath);
-      final exists = await directory.exists();
-      log('Attempting to access (original): $desktopPath');
-      log('Desktop exists (original): $exists');
-      return exists ? desktopPath : Platform.environment['HOME'] ?? '/';
-    }
-  }
-
-  ///
+mixin class FileOperationEvent {
   /// Delete selected items
-  ///
   Future<void> deleteSelectedItems(WidgetRef ref, BuildContext context) async {
     final selectedCount = ref.read(selectedItemsCountProvider);
 
@@ -89,9 +42,7 @@ mixin class HomeEvent {
     }
   }
 
-  ///
   /// Compress selected items
-  ///
   Future<void> compressSelectedItems(WidgetRef ref, BuildContext context) async {
     final currentDir = ref.read(currentDirectoryProvider);
     final selectedItems = ref.read(fileSystemItemListProvider).where((item) => item.isSelected).toList();
@@ -233,86 +184,70 @@ mixin class HomeEvent {
     }
   }
 
-  Future<Map<String, dynamic>> executeShellScript(String scriptPath, BuildContext context) async {
+  /// Rename a file or directory
+  Future<void> renameFileSystemItem(WidgetRef ref, FileSystemItem item, String newName, BuildContext context) async {
+    if (newName.isEmpty || newName == item.name) return;
+
+    final directory = path.dirname(item.path);
+    final newPath = path.join(directory, newName);
+
+    // Check if a file with this name already exists
+    if (File(newPath).existsSync() || Directory(newPath).existsSync()) {
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('파일 "$newName"은(는) 이미 존재합니다.'),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('확인'))],
+          );
+        },
+      );
+      return;
+    }
+
     try {
-      // Check and grant execute permission for the script
-      final statResult = await Process.run('chmod', ['+x', scriptPath]);
-      if (statResult.exitCode != 0) {
-        return {'success': false, 'output': 'Failed to grant execute permission: ${statResult.stderr}'};
+      if (item.type == FileSystemItemType.file) {
+        final file = File(item.path);
+        await file.rename(newPath);
+      } else {
+        final directory = Directory(item.path);
+        await directory.rename(newPath);
       }
 
-      // Execute the script
-      final result = await Process.run('sh', [scriptPath]);
+      // Refresh the current directory
+      final currentDir = ref.read(currentDirectoryProvider);
+      await ref.read(fileSystemItemListProvider.notifier).loadDirectory(currentDir);
 
-      return {
-        'success': result.exitCode == 0,
-        'output': result.stdout,
-        'error': result.stderr,
-        'exitCode': result.exitCode,
-      };
+      // Update the selectedFileItemProvider with the renamed item
+      final updatedItemIndex = ref.read(fileSystemItemListProvider).indexWhere((i) => i.path == newPath);
+      if (updatedItemIndex != -1) {
+        final updatedItem = ref.read(fileSystemItemListProvider)[updatedItemIndex];
+        ref.read(selectedFileItemProvider.notifier).state = updatedItem;
+
+        // Update the lastSelectedPathProvider
+        ref.read(lastSelectedPathProvider.notifier).state = updatedItem.path;
+
+        // Make sure the renamed item is selected in the list
+        ref.read(fileSystemItemListProvider.notifier).selectItem(updatedItem.path);
+      } else {
+        // If the item can't be found, clear the selection
+        ref.read(selectedFileItemProvider.notifier).state = null;
+        ref.read(lastSelectedPathProvider.notifier).state = null;
+      }
     } catch (e) {
-      return {'success': false, 'output': '스크립트 실행 중 오류가 발생했습니다: $e'};
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('파일 이름을 변경하지 못했습니다: $e'),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('확인'))],
+          );
+        },
+      );
     }
-  }
-
-  Future<void> executeScript(BuildContext context, WidgetRef ref, FileSystemItem item) async {
-    final shouldProceed = await DialogUtils.showShellScriptWarning(context);
-    if (shouldProceed != true) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => const AlertDialog(
-            content: Row(
-              children: [CircularProgressIndicator.adaptive(), SizedBox(width: 20), Text('Running shell script...')],
-            ),
-          ),
-    );
-
-    final result = await executeShellScript(item.path, context);
-    Navigator.of(context).pop();
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(result['success'] ? '실행 성공' : '실행 실패'),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (result['success']) Text('종료 코드: ${result['exitCode'] ?? 'Unknown'}'),
-                  const SizedBox(height: 8),
-                  const Text('출력:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(4)),
-                    width: double.infinity,
-                    child: SelectableText(
-                      result['output'] ?? '출력 없음',
-                      style: const TextStyle(color: Colors.white, fontFamily: 'monospace'),
-                    ),
-                  ),
-                  if (result['error'] != null && result['error'].toString().isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    const Text('오류:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(4)),
-                      width: double.infinity,
-                      child: SelectableText(
-                        result['error'] ?? '',
-                        style: const TextStyle(color: Colors.red, fontFamily: 'monospace'),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('닫기'))],
-          ),
-    );
   }
 }

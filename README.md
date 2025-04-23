@@ -25,7 +25,7 @@ A powerful Flutter-based file manager application for macOS that uses Riverpod f
 - Confirmation dialogs for critical operations (overwrite, delete)
 - Progress indicators for time-consuming operations
 
-### Tree View Features
+## Tree View
 
 - Interactive directory tree view with expand/collapse for nested folders
 - Search bar for filtering directories in the tree
@@ -37,7 +37,7 @@ A powerful Flutter-based file manager application for macOS that uses Riverpod f
 - Color-coded and pastel-toned path segments for improved readability
 - Smooth animated transitions for expanding/collapsing nodes
 
-### Image Preview & Editing
+## Image Preview & Editing
 
 - Inline image preview for supported file types (JPEG, PNG, etc.)
 - Rotate images directly within the preview panel

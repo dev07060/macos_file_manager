@@ -6,12 +6,13 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/src/home_event.dart';
 import 'package:macos_file_manager/src/home_state.dart';
+import 'package:macos_file_manager/src/navigation_event.dart';
 import 'package:macos_file_manager/src/widgets/favorites_section.dart';
 import 'package:macos_file_manager/src/widgets/file_details.dart';
 import 'package:macos_file_manager/src/widgets/file_item.dart';
 import 'package:macos_file_manager/src/widgets/toolbar.dart';
 
-class HomePage extends HookConsumerWidget with HomeState, HomeEvent {
+class HomePage extends HookConsumerWidget with HomeState, HomeEvent, NavigationEvent {
   const HomePage({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {

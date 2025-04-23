@@ -65,46 +65,87 @@ mixin class DragDropItemsEvent {
   Future<void> _moveFiles(WidgetRef ref, BuildContext context, List<String> sourcePaths, String targetDirPath) async {
     if (sourcePaths.isEmpty) return;
 
+    // Undo 정보를 저장
+    final List<Map<String, String>> movedItems = [];
+
     try {
       for (final sourcePath in sourcePaths) {
-        final sourceFile = File(sourcePath);
-        if (await sourceFile.exists()) {
-          final fileName = path.basename(sourcePath);
-          final destinationPath = path.join(targetDirPath, fileName);
+        final entity =
+            FileSystemEntity.typeSync(sourcePath) == FileSystemEntityType.directory
+                ? Directory(sourcePath)
+                : File(sourcePath);
+        final fileName = path.basename(sourcePath);
+        final destinationPath = path.join(targetDirPath, fileName);
 
-          // Check if destination already exists
-          final destinationFile = File(destinationPath);
-          if (await destinationFile.exists()) {
-            // Ask for confirmation to overwrite
-            final shouldOverwrite = await showDialog<bool>(
-              context: context,
-              builder:
-                  (context) => AlertDialog(
-                    title: const Text('파일이 이미 존재합니다'),
-                    content: Text('$fileName 파일이 이미 존재합니다. 덮어쓰시겠습니까?'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text('덮어쓰기', style: TextStyle(color: Colors.red)),
-                      ),
-                    ],
-                  ),
-            );
-            if (shouldOverwrite != true) continue;
+        // Check if destination already exists
+        final destinationType = FileSystemEntity.typeSync(destinationPath);
+        if (destinationType != FileSystemEntityType.notFound) {
+          // Ask for confirmation to overwrite
+          final shouldOverwrite = await showDialog<bool>(
+            context: context,
+            builder:
+                (context) => AlertDialog(
+                  title: const Text('이미 존재합니다'),
+                  content: Text('$fileName 이(가) 이미 존재합니다. 덮어쓰시겠습니까?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text('덮어쓰기', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+          );
+          if (shouldOverwrite != true) continue;
+          // 삭제
+          if (destinationType == FileSystemEntityType.directory) {
+            await Directory(destinationPath).delete(recursive: true);
+          } else {
+            await File(destinationPath).delete();
           }
-          // Move file
-          await sourceFile.rename(destinationPath);
         }
+        // Move entity
+        await entity.rename(destinationPath);
+        movedItems.add({'from': sourcePath, 'to': destinationPath});
       }
 
-      // Show success message
+      // Show success message with Undo
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(sourcePaths.length == 1 ? '파일을 이동했습니다' : '${sourcePaths.length}개의 파일을 이동했습니다')),
+        SnackBar(
+          content: Text(sourcePaths.length == 1 ? '이동 완료' : '${sourcePaths.length}개 항목 이동 완료'),
+          action: SnackBarAction(label: 'Undo', onPressed: () => _undoMoveFiles(ref, context, movedItems)),
+          duration: const Duration(seconds: 5),
+        ),
       );
     } catch (e) {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('파일 이동 중 오류가 발생했습니다: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('이동 중 오류: $e')));
+    }
+  }
+
+  Future<void> _undoMoveFiles(WidgetRef ref, BuildContext context, List<Map<String, String>> movedItems) async {
+    try {
+      for (final item in movedItems) {
+        final from = item['from']!;
+        final to = item['to']!;
+        final entityType = FileSystemEntity.typeSync(to);
+        if (entityType == FileSystemEntityType.directory) {
+          await Directory(to).rename(from);
+        } else if (entityType == FileSystemEntityType.file) {
+          await File(to).rename(from);
+        }
+      }
+      // Refresh the current directory after undo
+      final currentDir = ref.read(currentDirectoryProvider);
+      await ref.read(fileSystemItemListProvider.notifier).loadDirectory(currentDir);
+
+      // 안전하게 메시지 띄우기
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('undo complete')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('error while undo move: $e')));
+      }
     }
   }
 }

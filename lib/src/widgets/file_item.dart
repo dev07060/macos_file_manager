@@ -9,9 +9,10 @@ import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
 import 'package:macos_file_manager/src/drag_drop_items_event.dart';
 import 'package:macos_file_manager/src/home_event.dart';
+import 'package:macos_file_manager/src/navigation_event.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
-class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent {
+class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent, NavigationEvent {
   const FileItem({super.key, required this.item});
 
   final FileSystemItem item;
@@ -105,42 +106,43 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent {
         }
         return KeyEventResult.ignored;
       },
-      child:
-          item.type == FileSystemItemType.directory
-              ? _buildDroppableFolder(context, ref, itemWidget)
-              : _buildDraggableFile(context, ref, itemWidget),
+      child: _buildDraggableEntity(
+        context,
+        ref,
+        item.type == FileSystemItemType.directory ? _buildDroppableFolder(context, ref, itemWidget) : itemWidget,
+      ),
     );
   }
 
-  // Make file items draggable
-  Widget _buildDraggableFile(BuildContext context, WidgetRef ref, Widget child) {
+  // 드래그 아이템 생성 시 파일뿐 아니라 디렉토리도 허용
+  Future<DragItem?> createDragItemForEntity(FileSystemItem entity) async {
+    final dragItem = DragItem(
+      localData: {
+        'paths': [entity.path],
+      },
+      suggestedName: entity.name,
+    );
+    dragItem.add(Formats.plainText(entity.path));
+    return dragItem;
+  }
+
+  // _buildDraggableFile → _buildDraggableEntity로 이름 변경 및 사용
+  Widget _buildDraggableEntity(BuildContext context, WidgetRef ref, Widget child) {
     return DragItemWidget(
       allowedOperations: () => [DropOperation.copy, DropOperation.move],
       canAddItemToExistingSession: true,
       dragItemProvider: (request) async {
-        // Get all selected items
         final selectedItems = ref.read(fileSystemItemListProvider).where((i) => i.isSelected).toList();
-
-        // If this item is not among selected items, only drag this item
         if (!selectedItems.contains(item)) {
-          return createDragItemForFile(item);
+          return createDragItemForEntity(item);
         }
-
-        // Otherwise, create a drag item for all selected files
-        final allPaths = selectedItems.where((i) => i.type == FileSystemItemType.file).map((i) => i.path).toList();
-
-        if (allPaths.isEmpty) {
-          return null;
-        }
-
+        final allPaths = selectedItems.map((i) => i.path).toList();
+        if (allPaths.isEmpty) return null;
         final dragItem = DragItem(
           localData: {'paths': allPaths},
-          suggestedName: allPaths.length == 1 ? item.name : '${allPaths.length} files',
+          suggestedName: allPaths.length == 1 ? item.name : '${allPaths.length} items',
         );
-
-        // Add plain text format with all file paths
         dragItem.add(Formats.plainText(allPaths.join('\n')));
-
         return dragItem;
       },
       child: DraggableWidget(child: child),

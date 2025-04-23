@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/providers/favorites_provider.dart';
-import 'package:macos_file_manager/src/home_event.dart';
+import 'package:macos_file_manager/src/favorite_event.dart';
 import 'package:macos_file_manager/src/home_state.dart';
+import 'package:macos_file_manager/src/navigation_event.dart';
 
-class Toolbar extends HookConsumerWidget with HomeState, HomeEvent {
+class Toolbar extends HookConsumerWidget with HomeState, NavigationEvent, FavoriteEvent {
   const Toolbar({super.key});
 
   @override
