@@ -85,7 +85,7 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        hoverColor: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05),
+                        hoverColor: isDarkMode ? Colors.white10 : Colors.black.withValues(alpha: .05),
                         onTap: () => navigateToDirectory(ref, favorite.path),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -106,8 +106,8 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
                                   decoration: BoxDecoration(
                                     color:
                                         isDarkMode
-                                            ? Colors.blue.shade800.withOpacity(0.3)
-                                            : Colors.blue.withOpacity(0.1),
+                                            ? Colors.blue.shade800.withValues(alpha: .3)
+                                            : Colors.blue.withValues(alpha: .1),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(

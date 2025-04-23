@@ -27,7 +27,6 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
     final textEditingController = useTextEditingController();
     final focusNode = useFocusNode();
 
-    // 테마 모드 상태 확인
     final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
 
     // Individual state management
@@ -86,11 +85,7 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
           return Center(
             child: Text(
               'No file selected',
-              style: TextStyle(
-                fontSize: 16,
-                // 테마에 맞는 텍스트 색상
-                color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
             ),
           );
         }
@@ -100,7 +95,6 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
         // Show the file details
         return MouseRegion(
           child: Container(
-            // 테마에 맞는 배경색
             color: Theme.of(context).scaffoldBackgroundColor,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,15 +121,14 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
                   ],
                 ),
                 if (isShellScript) ...[
-                  // 테마에 맞는 구분선
                   Divider(height: 1, color: Theme.of(context).dividerColor),
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: TextButton(
-                      // 테마에 맞는 버튼 스타일
                       style: TextButton.styleFrom(
                         foregroundColor: isDarkMode ? Colors.blue.shade300 : Colors.blue,
-                        backgroundColor: isDarkMode ? Colors.blue.withOpacity(0.1) : Colors.blue.withOpacity(0.05),
+                        backgroundColor:
+                            isDarkMode ? Colors.blue.withValues(alpha: .1) : Colors.blue.withValues(alpha: .05),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       ),
                       child: const Text('Run .sh'),
@@ -176,7 +169,6 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
                               children: [
                                 FileInformationWidget(item: selectedItem),
                                 if (isImage) ...[
-                                  // 테마에 맞는 구분선
                                   Divider(height: 1, color: Theme.of(context).dividerColor),
                                   Padding(
                                     padding: const EdgeInsets.all(16),
@@ -188,7 +180,6 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
-                                            // 테마에 맞는 텍스트 색상
                                             color: Theme.of(context).textTheme.titleLarge?.color,
                                           ),
                                         ),
@@ -217,19 +208,12 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
       loading:
           () => Center(
             child: CircularProgressIndicator.adaptive(
-              // 테마에 맞는 로딩 인디케이터 색상
               valueColor: AlwaysStoppedAnimation<Color>(isDarkMode ? Colors.blue.shade300 : Colors.blue.shade700),
             ),
           ),
       error:
           (error, stack) => Center(
-            child: Text(
-              'Error: $error',
-              style: TextStyle(
-                // 테마에 맞는 에러 텍스트 색상
-                color: isDarkMode ? Colors.red.shade300 : Colors.red,
-              ),
-            ),
+            child: Text('Error: $error', style: TextStyle(color: isDarkMode ? Colors.red.shade300 : Colors.red)),
           ),
     );
   }
@@ -241,11 +225,7 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
         if (!isHovered) return const SizedBox();
 
         return IconButton(
-          icon: Icon(
-            Icons.account_tree,
-            // 테마에 맞는 아이콘 색상
-            color: isDarkMode ? Colors.blue.shade300 : Colors.blue.shade700,
-          ),
+          icon: Icon(Icons.account_tree, color: isDarkMode ? Colors.blue.shade300 : Colors.blue.shade700),
           tooltip: 'Show Directory Tree',
           onPressed: () {
             ref.read(treeViewNotifierProvider.notifier).showTreeView(item.path);

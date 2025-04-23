@@ -29,13 +29,13 @@ class FileItem extends HookConsumerWidget with BaseEvent, DragDropItemsEvent, Na
     Widget itemWidget = Material(
       color:
           isSelected
-              ? (isDarkMode ? Colors.blue.shade700.withOpacity(0.2) : Colors.blue.withOpacity(0.1))
+              ? (isDarkMode ? Colors.blue.shade700.withValues(alpha: .2) : Colors.blue.withValues(alpha: .1))
               : Colors.transparent,
       child: MouseRegion(
         onEnter: (_) => isHovered.value = true,
         onExit: (_) => isHovered.value = false,
         child: InkWell(
-          hoverColor: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.03),
+          hoverColor: isDarkMode ? Colors.white10 : Colors.black.withValues(alpha: .03),
           onTap: () {
             final isShiftPressed =
                 HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shift) ||
@@ -95,7 +95,7 @@ class FileItem extends HookConsumerWidget with BaseEvent, DragDropItemsEvent, Na
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1),
+                            color: isDarkMode ? Colors.white.withValues(alpha: .1) : Colors.black.withValues(alpha: .1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Icon(
