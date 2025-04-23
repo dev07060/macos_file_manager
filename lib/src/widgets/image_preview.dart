@@ -5,9 +5,11 @@ import 'dart:ui' as ui;
 
 import 'package:extended_image/extended_image.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/providers/theme_provider.dart';
 import 'package:macos_file_manager/utils/image_utils.dart';
 
-class ImagePreview extends StatelessWidget {
+class ImagePreview extends ConsumerWidget {
   final String imagePath;
   final bool isFullView;
   final ValueNotifier<int> rotationAngle;
@@ -26,14 +28,17 @@ class ImagePreview extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 테마 모드 상태 확인
+    final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
+
     if (!isFullView) {
-      return _buildCompactPreview();
+      return _buildCompactPreview(isDarkMode);
     }
-    return _buildFullPreview(context);
+    return _buildFullPreview(context, isDarkMode);
   }
 
-  Widget _buildCompactPreview() {
+  Widget _buildCompactPreview(bool isDarkMode) {
     return Container(
       alignment: Alignment.center,
       constraints: const BoxConstraints(maxHeight: 300),
@@ -45,46 +50,64 @@ class ImagePreview extends StatelessWidget {
           cacheWidth: null,
           key: ValueKey('image_${imageKey.value}'),
           errorBuilder: (context, error, stackTrace) {
-            return const Center(child: Text('Unable to load image', style: TextStyle(color: Colors.red)));
+            return Center(
+              child: Text(
+                'Unable to load image',
+                style: TextStyle(
+                  // 테마에 맞는 에러 텍스트 색상
+                  color: isDarkMode ? Colors.redAccent.shade200 : Colors.red,
+                ),
+              ),
+            );
           },
         ),
       ),
     );
   }
 
-  Widget _buildFullPreview(BuildContext context) {
+  Widget _buildFullPreview(BuildContext context, bool isDarkMode) {
     final GlobalKey<ExtendedImageEditorState> editorKey = GlobalKey<ExtendedImageEditorState>();
 
-    return isCropping.value ? _buildCroppingView(editorKey, context) : _buildRotatedView();
+    return isCropping.value ? _buildCroppingView(editorKey, context, isDarkMode) : _buildRotatedView(isDarkMode);
   }
 
-  Widget _buildCroppingView(GlobalKey<ExtendedImageEditorState> editorKey, BuildContext context) {
+  Widget _buildCroppingView(GlobalKey<ExtendedImageEditorState> editorKey, BuildContext context, bool isDarkMode) {
     return Stack(
       children: [
-        Transform.rotate(
-          angle: rotationAngle.value * math.pi / 180,
-          child: ExtendedImage.file(
-            File(imagePath),
-            fit: BoxFit.contain,
-            mode: ExtendedImageMode.editor,
-            enableLoadState: true,
-            initEditorConfigHandler: (state) {
-              return EditorConfig(
-                maxScale: 8.0,
-                cropRectPadding: const EdgeInsets.all(20.0),
-                hitTestSize: 20.0,
-                cropAspectRatio: 3 / 2,
-                cornerColor: Colors.white,
-                lineColor: Colors.white,
-              );
-            },
-            extendedImageEditorKey: editorKey,
-            loadStateChanged: (state) {
-              if (state.extendedImageLoadState == LoadState.failed) {
-                return const Center(child: Text('Unable to load image', style: TextStyle(color: Colors.red)));
-              }
-              return null;
-            },
+        // 이미지 배경색 적용
+        Container(
+          color: isDarkMode ? Colors.black26 : Colors.grey.shade50,
+          child: Transform.rotate(
+            angle: rotationAngle.value * math.pi / 180,
+            child: ExtendedImage.file(
+              File(imagePath),
+              fit: BoxFit.contain,
+              mode: ExtendedImageMode.editor,
+              enableLoadState: true,
+              initEditorConfigHandler: (state) {
+                return EditorConfig(
+                  maxScale: 8.0,
+                  cropRectPadding: const EdgeInsets.all(20.0),
+                  hitTestSize: 20.0,
+                  cropAspectRatio: 3 / 2,
+                  // 테마에 맞는 크롭 영역 색상
+                  cornerColor: isDarkMode ? Colors.blueAccent : Colors.white,
+                  lineColor: isDarkMode ? Colors.blueAccent : Colors.white,
+                );
+              },
+              extendedImageEditorKey: editorKey,
+              loadStateChanged: (state) {
+                if (state.extendedImageLoadState == LoadState.failed) {
+                  return Center(
+                    child: Text(
+                      'Unable to load image',
+                      style: TextStyle(color: isDarkMode ? Colors.redAccent.shade200 : Colors.red),
+                    ),
+                  );
+                }
+                return null;
+              },
+            ),
           ),
         ),
         Positioned(
@@ -94,6 +117,9 @@ class ImagePreview extends StatelessWidget {
             children: [
               FloatingActionButton(
                 mini: true,
+                // 테마에 맞는 버튼 색상
+                backgroundColor: isDarkMode ? Colors.blue.shade700 : Colors.blue,
+                foregroundColor: Colors.white,
                 onPressed: () async {
                   final editorState = editorKey.currentState;
                   if (editorState != null) {
@@ -105,6 +131,9 @@ class ImagePreview extends StatelessWidget {
               const SizedBox(width: 8),
               FloatingActionButton(
                 mini: true,
+                // 테마에 맞는 버튼 색상
+                backgroundColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
+                foregroundColor: isDarkMode ? Colors.white : Colors.black87,
                 onPressed: () {
                   isCropping.value = false;
                 },
@@ -117,7 +146,7 @@ class ImagePreview extends StatelessWidget {
     );
   }
 
-  Widget _buildRotatedView() {
+  Widget _buildRotatedView(bool isDarkMode) {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: double.infinity, maxHeight: double.infinity),
@@ -125,6 +154,8 @@ class ImagePreview extends StatelessWidget {
           aspectRatio: 1,
           child: Container(
             padding: const EdgeInsets.all(16),
+            // 테마에 맞는 배경색
+            color: isDarkMode ? Colors.black12 : Colors.transparent,
             child: Transform.rotate(
               angle: rotationAngle.value * math.pi / 180,
               child: Image.file(
@@ -133,7 +164,12 @@ class ImagePreview extends StatelessWidget {
                 cacheWidth: null,
                 key: ValueKey('image_${imageKey.value}'),
                 errorBuilder: (context, error, stackTrace) {
-                  return const Center(child: Text('Unable to load image', style: TextStyle(color: Colors.red)));
+                  return Center(
+                    child: Text(
+                      'Unable to load image',
+                      style: TextStyle(color: isDarkMode ? Colors.redAccent.shade200 : Colors.red),
+                    ),
+                  );
                 },
               ),
             ),
@@ -169,7 +205,13 @@ class ImagePreview extends StatelessWidget {
     await imageFile.writeAsBytes(croppedImageBytes);
 
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image cropped and saved successfully')));
+      // 테마에 맞는 스낵바 스타일
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Image cropped and saved successfully'),
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+        ),
+      );
     }
     onCropComplete();
     isCropping.value = false;

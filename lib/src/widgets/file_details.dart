@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
+import 'package:macos_file_manager/providers/theme_provider.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
 import 'package:macos_file_manager/src/base_event.dart';
 import 'package:macos_file_manager/src/base_state.dart';
@@ -25,6 +26,9 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
     final treeViewState = ref.watch(treeViewNotifierProvider);
     final textEditingController = useTextEditingController();
     final focusNode = useFocusNode();
+
+    // 테마 모드 상태 확인
+    final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
 
     // Individual state management
     final isInfoCollapsed = useState(false);
@@ -79,7 +83,16 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
 
         // If the tree view is inactive, check if a file is selected
         if (selectedItem == null) {
-          return const Center(child: Text('No file selected', style: TextStyle(fontSize: 16, color: Colors.grey)));
+          return Center(
+            child: Text(
+              'No file selected',
+              style: TextStyle(
+                fontSize: 16,
+                // 테마에 맞는 텍스트 색상
+                color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
+              ),
+            ),
+          );
         }
         final isShellScript = FileUtils.isShellScript(selectedItem);
         final isImage = FileUtils.isImageFile(selectedItem);
@@ -87,7 +100,8 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
         // Show the file details
         return MouseRegion(
           child: Container(
-            color: Colors.white,
+            // 테마에 맞는 배경색
+            color: Theme.of(context).scaffoldBackgroundColor,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -109,14 +123,21 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
                     ),
                     // Show the tree view button only for directories
                     if (selectedItem.type == FileSystemItemType.directory)
-                      Positioned(right: 16, top: 8, child: _buildTreeViewButton(ref, selectedItem)),
+                      Positioned(right: 16, top: 8, child: _buildTreeViewButton(ref, selectedItem, isDarkMode)),
                   ],
                 ),
                 if (isShellScript) ...[
-                  const Divider(height: 1),
+                  // 테마에 맞는 구분선
+                  Divider(height: 1, color: Theme.of(context).dividerColor),
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: TextButton(
+                      // 테마에 맞는 버튼 스타일
+                      style: TextButton.styleFrom(
+                        foregroundColor: isDarkMode ? Colors.blue.shade300 : Colors.blue,
+                        backgroundColor: isDarkMode ? Colors.blue.withOpacity(0.1) : Colors.blue.withOpacity(0.05),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
                       child: const Text('Run .sh'),
                       onPressed: () => executeScript(context, ref, selectedItem),
                     ),
@@ -155,15 +176,21 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
                               children: [
                                 FileInformationWidget(item: selectedItem),
                                 if (isImage) ...[
-                                  const Divider(height: 1),
+                                  // 테마에 맞는 구분선
+                                  Divider(height: 1, color: Theme.of(context).dividerColor),
                                   Padding(
                                     padding: const EdgeInsets.all(16),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
+                                        Text(
                                           'Preview',
-                                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            // 테마에 맞는 텍스트 색상
+                                            color: Theme.of(context).textTheme.titleLarge?.color,
+                                          ),
                                         ),
                                         const SizedBox(height: 16),
                                         ImagePreview(
@@ -187,19 +214,38 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator.adaptive()),
-      error: (error, stack) => Center(child: Text('Error: $error')),
+      loading:
+          () => Center(
+            child: CircularProgressIndicator.adaptive(
+              // 테마에 맞는 로딩 인디케이터 색상
+              valueColor: AlwaysStoppedAnimation<Color>(isDarkMode ? Colors.blue.shade300 : Colors.blue.shade700),
+            ),
+          ),
+      error:
+          (error, stack) => Center(
+            child: Text(
+              'Error: $error',
+              style: TextStyle(
+                // 테마에 맞는 에러 텍스트 색상
+                color: isDarkMode ? Colors.red.shade300 : Colors.red,
+              ),
+            ),
+          ),
     );
   }
 
   /// Builds the tree view button for the given [item].
-  Widget _buildTreeViewButton(WidgetRef ref, FileSystemItem item) {
+  Widget _buildTreeViewButton(WidgetRef ref, FileSystemItem item, bool isDarkMode) {
     return HoverBuilder(
       builder: (context, isHovered) {
         if (!isHovered) return const SizedBox();
 
         return IconButton(
-          icon: const Icon(Icons.account_tree),
+          icon: Icon(
+            Icons.account_tree,
+            // 테마에 맞는 아이콘 색상
+            color: isDarkMode ? Colors.blue.shade300 : Colors.blue.shade700,
+          ),
           tooltip: 'Show Directory Tree',
           onPressed: () {
             ref.read(treeViewNotifierProvider.notifier).showTreeView(item.path);

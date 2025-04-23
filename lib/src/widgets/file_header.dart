@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
+import 'package:macos_file_manager/providers/theme_provider.dart';
 
-class FileHeader extends StatelessWidget {
+class FileHeader extends ConsumerWidget {
   final FileSystemItem item;
   final bool isImage;
   final bool isInfoCollapsed;
@@ -24,10 +26,18 @@ class FileHeader extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // 테마 모드 상태 확인
+    final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+      // 테마에 맞는 구분선 색상 적용
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200)),
+        // 테마에 맞는 배경색 적용
+        color: Theme.of(context).cardColor,
+      ),
       child: Row(
         children: [
           Icon(
@@ -37,12 +47,15 @@ class FileHeader extends StatelessWidget {
                 ? Icons.image
                 : Icons.insert_drive_file,
             size: 48,
+            // 파일 타입별 아이콘 색상은 유지, 일부 조정
             color:
                 item.type == FileSystemItemType.directory
-                    ? Colors.amber.shade800
+                    ? Colors
+                        .amber
+                        .shade800 // 폴더는 항상 노란색
                     : isImage
-                    ? Colors.blue
-                    : Colors.blueGrey,
+                    ? (isDarkMode ? Colors.blue.shade300 : Colors.blue) // 이미지는 파란색 조정
+                    : (isDarkMode ? Colors.blueGrey.shade300 : Colors.blueGrey), // 일반 파일
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -57,11 +70,12 @@ class FileHeader extends StatelessWidget {
                       Future.microtask(() => focusNode.requestFocus());
                     }
                   },
-                  child: _buildFileName(),
+                  child: _buildFileName(context, isDarkMode),
                 ),
                 Text(
                   item.path,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                  // 테마에 맞는 경로 텍스트 색상
+                  style: TextStyle(fontSize: 12, color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -69,7 +83,11 @@ class FileHeader extends StatelessWidget {
           ),
           if (isImage)
             IconButton(
-              icon: Icon(isInfoCollapsed ? Icons.expand_more : Icons.expand_less),
+              icon: Icon(
+                isInfoCollapsed ? Icons.expand_more : Icons.expand_less,
+                // 테마에 맞는 아이콘 색상
+                color: Theme.of(context).iconTheme.color,
+              ),
               tooltip: isInfoCollapsed ? 'Show information' : 'Hide information',
               onPressed: onCollapseToggle,
             ),
@@ -78,18 +96,35 @@ class FileHeader extends StatelessWidget {
     );
   }
 
-  Widget _buildFileName() {
+  Widget _buildFileName(BuildContext context, bool isDarkMode) {
     if (isEditingFilename.value) {
       return TextField(
         controller: textEditingController,
         focusNode: focusNode,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        // 테마에 맞는 텍스트 스타일
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).textTheme.bodyLarge?.color,
+        ),
         decoration: InputDecoration(
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+          // 테마에 맞는 테두리 색상
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(4),
+            borderSide: BorderSide(color: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade400),
+          ),
+          // 테마에 맞는 배경색
+          fillColor:
+              Theme.of(context).inputDecorationTheme.fillColor ?? (isDarkMode ? Colors.grey.shade800 : Colors.white),
+          filled: true,
           suffixIcon: IconButton(
-            icon: const Icon(Icons.check),
+            icon: Icon(
+              Icons.check,
+              // 테마에 맞는 아이콘 색상
+              color: Theme.of(context).iconTheme.color,
+            ),
             onPressed: () {
               onRename(textEditingController.text);
               isEditingFilename.value = false;
@@ -104,7 +139,8 @@ class FileHeader extends StatelessWidget {
     }
     return Text(
       item.name,
-      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      // 테마에 맞는 텍스트 색상
+      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color),
       overflow: TextOverflow.ellipsis,
     );
   }
