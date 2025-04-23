@@ -2,7 +2,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 
-mixin class HomeState {
+mixin class BaseState {
   ///
   /// Current directory path
   ///

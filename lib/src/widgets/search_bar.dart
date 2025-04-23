@@ -17,6 +17,7 @@ class FSearchBar extends StatelessWidget {
     this.onFocusChanged,
     this.textInputAction,
     this.onClear,
+    this.isDarkMode = false,
   });
 
   final FSearchBarVariant variant;
@@ -31,6 +32,7 @@ class FSearchBar extends StatelessWidget {
   final ValueChanged<bool>? onFocusChanged;
   final TextInputAction? textInputAction;
   final VoidCallback? onClear;
+  final bool isDarkMode;
 
   factory FSearchBar.normal({
     Key? key,
@@ -44,6 +46,7 @@ class FSearchBar extends StatelessWidget {
     ValueChanged<bool>? onFocusChanged,
     TextInputAction? textInputAction,
     VoidCallback? onClear,
+    bool isDarkMode = false,
   }) {
     return FSearchBar(
       key: key,
@@ -59,6 +62,7 @@ class FSearchBar extends StatelessWidget {
       onFocusChanged: onFocusChanged,
       textInputAction: textInputAction,
       onClear: onClear,
+      isDarkMode: isDarkMode,
     );
   }
 
@@ -74,6 +78,7 @@ class FSearchBar extends StatelessWidget {
     ValueChanged<bool>? onFocusChanged,
     TextInputAction? textInputAction,
     VoidCallback? onClear,
+    bool isDarkMode = false,
   }) {
     return FSearchBar(
       key: key,
@@ -89,6 +94,7 @@ class FSearchBar extends StatelessWidget {
       onFocusChanged: onFocusChanged,
       textInputAction: textInputAction,
       onClear: onClear,
+      isDarkMode: isDarkMode,
     );
   }
 
@@ -97,6 +103,12 @@ class FSearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final backgroundColor = isDarkMode ? Colors.grey.shade800 : Colors.white;
+    final borderColor = isDarkMode ? Colors.grey.shade700 : Colors.grey.shade200;
+    final textColor = isDarkMode ? Colors.white : Colors.black87;
+    final hintColor = isDarkMode ? Colors.grey.shade500 : Colors.grey.shade500;
+    final iconColor = isDarkMode ? Colors.grey.shade400 : Colors.grey.shade500;
+
     return Focus(
       focusNode: focusNode,
       onFocusChange: onFocusChanged,
@@ -108,24 +120,24 @@ class FSearchBar extends StatelessWidget {
           builder:
               (context, value, child) => TextField(
                 controller: controller,
-                cursorColor: Colors.black87,
+                cursorColor: textColor,
                 textAlignVertical: TextAlignVertical.center,
-                // style: FTextStyles.bodyL.r.copyWith(color: FColors.of(context).labelNormal),
+                style: TextStyle(color: textColor),
                 textInputAction: textInputAction,
                 onTap: onTap,
                 decoration: InputDecoration(
                   hintText: hintText,
-                  hintStyle: TextStyle(color: Colors.grey[500]!),
-                  border: outlinedInputBorder(Colors.grey[200]!),
-                  enabledBorder: outlinedInputBorder(Colors.grey[200]!),
-                  focusedBorder: outlinedInputBorder(Colors.grey[200]!),
+                  hintStyle: TextStyle(color: hintColor),
+                  border: outlinedInputBorder(borderColor),
+                  enabledBorder: outlinedInputBorder(borderColor),
+                  focusedBorder: outlinedInputBorder(isDarkMode ? Colors.blue.shade700 : Colors.blue.shade300),
                   contentPadding: contentPadding,
                   prefixIcon: Padding(
                     padding: prefixIconPadding,
                     child: SizedBox(
                       width: iconSize,
                       height: iconSize,
-                      child: Center(child: Icon(Icons.search, size: iconSize, color: Colors.grey[500]!)),
+                      child: Center(child: Icon(Icons.search, size: iconSize, color: iconColor)),
                     ),
                   ),
                   suffixIcon:
@@ -144,18 +156,14 @@ class FSearchBar extends StatelessWidget {
                                 child: Center(
                                   child: Text(
                                     'Clear',
-                                    style: TextStyle(
-                                      color: Colors.grey[500]!,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: TextStyle(color: iconColor, fontSize: 16, fontWeight: FontWeight.w500),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                  filled: false,
-                  fillColor: Colors.black12,
+                  filled: true,
+                  fillColor: backgroundColor,
                   isDense: true,
                 ),
                 onSubmitted: onSubmitted,

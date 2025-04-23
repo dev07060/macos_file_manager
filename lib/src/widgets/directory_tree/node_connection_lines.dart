@@ -5,8 +5,9 @@ import 'package:macos_file_manager/src/widgets/directory_tree/custom_painter/tre
 class NodeConnectionLines extends StatefulWidget {
   final List<GlobalKey> childKeys;
   final int updateTrigger;
+  final bool isDarkMode;
 
-  const NodeConnectionLines({super.key, required this.childKeys, this.updateTrigger = 0});
+  const NodeConnectionLines({super.key, required this.childKeys, this.updateTrigger = 0, this.isDarkMode = false});
 
   @override
   State<NodeConnectionLines> createState() => _NodeConnectionLinesState();
@@ -25,7 +26,9 @@ class _NodeConnectionLinesState extends State<NodeConnectionLines> {
   @override
   void didUpdateWidget(NodeConnectionLines oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.childKeys != oldWidget.childKeys || widget.updateTrigger != oldWidget.updateTrigger) {
+    if (widget.childKeys != oldWidget.childKeys ||
+        widget.updateTrigger != oldWidget.updateTrigger ||
+        widget.isDarkMode != oldWidget.isDarkMode) {
       _schedulePositionUpdate();
     }
   }
@@ -76,7 +79,7 @@ class _NodeConnectionLinesState extends State<NodeConnectionLines> {
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: CustomPaint(
-        painter: TreeLinePainter(nodePositions: _nodePositions),
+        painter: TreeLinePainter(nodePositions: _nodePositions, isDarkMode: widget.isDarkMode),
         size: const Size(40, double.infinity),
       ),
     );

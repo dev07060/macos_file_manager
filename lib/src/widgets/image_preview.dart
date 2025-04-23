@@ -122,14 +122,14 @@ class ImagePreview extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: double.infinity, maxHeight: double.infinity),
         child: AspectRatio(
-          aspectRatio: 1, // 정사각형 영역 확보
+          aspectRatio: 1,
           child: Container(
             padding: const EdgeInsets.all(16),
             child: Transform.rotate(
               angle: rotationAngle.value * math.pi / 180,
               child: Image.file(
                 File(imagePath),
-                fit: BoxFit.contain, // contain으로 변경
+                fit: BoxFit.contain,
                 cacheWidth: null,
                 key: ValueKey('image_${imageKey.value}'),
                 errorBuilder: (context, error, stackTrace) {

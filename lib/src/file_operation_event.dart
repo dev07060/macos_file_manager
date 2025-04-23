@@ -4,13 +4,16 @@ import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
-import 'package:macos_file_manager/providers/file_system_providers.dart';
+import 'package:macos_file_manager/services/file_system_service.dart';
 import 'package:path/path.dart' as path;
 
 mixin class FileOperationEvent {
   /// Delete selected items
   Future<void> deleteSelectedItems(WidgetRef ref, BuildContext context) async {
-    final selectedCount = ref.read(selectedItemsCountProvider);
+    // 서비스 인스턴스 가져오기
+    final service = ref.read(fileSystemServiceProvider);
+
+    final selectedCount = service.getSelectedItemsCount();
 
     // Show confirmation dialog
     final shouldDelete = await showDialog<bool>(
@@ -31,21 +34,21 @@ mixin class FileOperationEvent {
     );
 
     if (shouldDelete == true) {
-      await ref.read(fileSystemItemListProvider.notifier).deleteSelectedItems();
-      // Refresh the directory
-      final currentDir = ref.read(currentDirectoryProvider);
-      await ref.read(fileSystemItemListProvider.notifier).loadDirectory(currentDir);
+      await service.deleteSelectedItems();
 
-      // Clear the selected file item and last selected path
-      ref.read(selectedFileItemProvider.notifier).state = null;
-      ref.read(lastSelectedPathProvider.notifier).state = null;
+      // Refresh the directory
+      final currentDir = service.getCurrentDirectory();
+      await service.loadDirectory(currentDir);
+
+      // Clear the selection
+      service.clearSelections();
     }
   }
 
   /// Compress selected items
   Future<void> compressSelectedItems(WidgetRef ref, BuildContext context) async {
-    final currentDir = ref.read(currentDirectoryProvider);
-    final selectedItems = ref.read(fileSystemItemListProvider).where((item) => item.isSelected).toList();
+    final currentDir = ref.read(fileSystemServiceProvider).getCurrentDirectory();
+    final selectedItems = ref.read(fileSystemServiceProvider).getSelectedItems();
 
     if (selectedItems.isEmpty) return;
 
@@ -148,7 +151,7 @@ mixin class FileOperationEvent {
       Navigator.of(context).pop();
 
       // Reload the directory to show the new zip file
-      await ref.read(fileSystemItemListProvider.notifier).loadDirectory(currentDir);
+      await ref.read(fileSystemServiceProvider).loadDirectory(currentDir);
     } catch (e) {
       // Close progress dialog
       Navigator.of(context).pop();
@@ -188,10 +191,12 @@ mixin class FileOperationEvent {
   Future<void> renameFileSystemItem(WidgetRef ref, FileSystemItem item, String newName, BuildContext context) async {
     if (newName.isEmpty || newName == item.name) return;
 
+    final service = ref.read(fileSystemServiceProvider);
+
+    // Check if a file with this name already exists
     final directory = path.dirname(item.path);
     final newPath = path.join(directory, newName);
 
-    // Check if a file with this name already exists
     if (File(newPath).existsSync() || Directory(newPath).existsSync()) {
       // Show error dialog
       showDialog(
@@ -207,43 +212,16 @@ mixin class FileOperationEvent {
       return;
     }
 
-    try {
-      if (item.type == FileSystemItemType.file) {
-        final file = File(item.path);
-        await file.rename(newPath);
-      } else {
-        final directory = Directory(item.path);
-        await directory.rename(newPath);
-      }
+    final success = await service.renameItem(item, newName);
 
-      // Refresh the current directory
-      final currentDir = ref.read(currentDirectoryProvider);
-      await ref.read(fileSystemItemListProvider.notifier).loadDirectory(currentDir);
-
-      // Update the selectedFileItemProvider with the renamed item
-      final updatedItemIndex = ref.read(fileSystemItemListProvider).indexWhere((i) => i.path == newPath);
-      if (updatedItemIndex != -1) {
-        final updatedItem = ref.read(fileSystemItemListProvider)[updatedItemIndex];
-        ref.read(selectedFileItemProvider.notifier).state = updatedItem;
-
-        // Update the lastSelectedPathProvider
-        ref.read(lastSelectedPathProvider.notifier).state = updatedItem.path;
-
-        // Make sure the renamed item is selected in the list
-        ref.read(fileSystemItemListProvider.notifier).selectItem(updatedItem.path);
-      } else {
-        // If the item can't be found, clear the selection
-        ref.read(selectedFileItemProvider.notifier).state = null;
-        ref.read(lastSelectedPathProvider.notifier).state = null;
-      }
-    } catch (e) {
+    if (!success) {
       // Show error dialog
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Error'),
-            content: Text('파일 이름을 변경하지 못했습니다: $e'),
+            content: Text('파일 이름을 변경하지 못했습니다.'),
             actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('확인'))],
           );
         },

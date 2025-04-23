@@ -41,11 +41,10 @@ class ImageControlsWidget extends StatelessWidget {
                   isCropping.value
                       ? null
                       : () {
-                        // 반시계 방향 (왼쪽) 회전
                         int newAngle = (rotationAngle.value - 90) % 360;
                         if (newAngle < 0) newAngle += 360;
                         rotationAngle.value = newAngle;
-                        log('왼쪽 회전: ${rotationAngle.value}');
+                        log('rotate to left: ${rotationAngle.value}');
                       },
               isFirst: true,
             ),
@@ -56,9 +55,8 @@ class ImageControlsWidget extends StatelessWidget {
                   isCropping.value
                       ? null
                       : () {
-                        // 시계 방향 (오른쪽) 회전
                         rotationAngle.value = (rotationAngle.value + 90) % 360;
-                        log('오른쪽 회전: ${rotationAngle.value}');
+                        log('rotate to right: ${rotationAngle.value}');
                       },
             ),
             _buildSegmentedButton(
@@ -79,7 +77,7 @@ class ImageControlsWidget extends StatelessWidget {
                         lastSavedAngle.value = rotationAngle.value;
                         rotationAngle.value = 0;
 
-                        // 이미지 저장 후 새로고침
+                        // saved image and re-load image
                         if (onImageSaved != null) {
                           onImageSaved!();
                         }

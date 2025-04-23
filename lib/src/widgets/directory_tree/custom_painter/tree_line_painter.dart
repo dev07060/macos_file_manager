@@ -3,14 +3,17 @@ import 'package:flutter/material.dart';
 /// Custom painter that draws the tree connection lines (both horizontal and vertical lines).
 class TreeLinePainter extends CustomPainter {
   final List<double> nodePositions;
+  final bool isDarkMode;
 
-  TreeLinePainter({required this.nodePositions});
+  TreeLinePainter({required this.nodePositions, this.isDarkMode = false});
 
   @override
   void paint(Canvas canvas, Size size) {
+    final Color lineColor = isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300;
+
     final paint =
         Paint()
-          ..color = Colors.grey.shade300
+          ..color = lineColor
           ..strokeWidth = 3
           ..style = PaintingStyle.stroke;
 
@@ -34,6 +37,6 @@ class TreeLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant TreeLinePainter oldDelegate) {
-    return oldDelegate.nodePositions != nodePositions;
+    return oldDelegate.nodePositions != nodePositions || oldDelegate.isDarkMode != isDarkMode;
   }
 }

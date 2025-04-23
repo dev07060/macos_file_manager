@@ -6,9 +6,7 @@ import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:path/path.dart' as path;
 
 mixin class NavigationEvent {
-  ///
   /// Handle item click - select item or navigate to directory with multi-select support
-  ///
   Future<void> handleItemClick(
     WidgetRef ref,
     FileSystemItem item, {
@@ -137,12 +135,11 @@ mixin class NavigationEvent {
         desktopPath = path.join(homeDir, 'Desktop');
         final desktopDir = Directory(desktopPath);
         if (!await desktopDir.exists()) {
-          desktopPath = homeDir; // If the desktop folder doesn't exist, fallback to the home directory
+          desktopPath = homeDir;
         }
       }
     } else {
-      desktopPath =
-          Platform.environment['HOME'] ?? '/'; // If it's not macOS, keep the existing method (modify as needed)
+      desktopPath = Platform.environment['HOME'] ?? '/';
     }
 
     if (desktopPath != null) {
@@ -167,13 +164,13 @@ mixin class NavigationEvent {
           if (await desktopDir.exists()) {
             return desktopPath;
           } else {
-            return homeDir; // If the desktop folder doesn't exist, return the home directory
+            return homeDir;
           }
         } else {
-          return '/'; // Fallback to the default path if failed to get the home directory
+          return '/';
         }
       } catch (e) {
-        return '/'; // Fallback to the default path if an error occurred
+        return '/';
       }
     } else {
       // If it's not macOS, keep the existing method (modify as needed)
@@ -190,6 +187,6 @@ mixin class NavigationEvent {
     } else if (Platform.isWindows) {
       return Platform.environment['USERPROFILE'];
     }
-    return null; // Other platforms
+    return null;
   }
 }

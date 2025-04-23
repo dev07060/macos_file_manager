@@ -6,13 +6,14 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/constants/file_constants.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
+import 'package:macos_file_manager/providers/theme_provider.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
+import 'package:macos_file_manager/src/base_event.dart';
 import 'package:macos_file_manager/src/drag_drop_items_event.dart';
-import 'package:macos_file_manager/src/home_event.dart';
 import 'package:macos_file_manager/src/navigation_event.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
-class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent, NavigationEvent {
+class FileItem extends HookConsumerWidget with BaseEvent, DragDropItemsEvent, NavigationEvent {
   const FileItem({super.key, required this.item});
 
   final FileSystemItem item;
@@ -23,12 +24,21 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent, Na
     final isSelected = item.isSelected;
     final focusNode = useFocusNode();
 
+    // 테마 상태 감시
+    final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
+
     Widget itemWidget = Material(
-      color: isSelected ? Colors.blue.withValues(alpha: .1) : Colors.transparent,
+      // 테마에 맞는 선택 배경색 적용
+      color:
+          isSelected
+              ? (isDarkMode ? Colors.blue.shade700.withOpacity(0.2) : Colors.blue.withOpacity(0.1))
+              : Colors.transparent,
       child: MouseRegion(
         onEnter: (_) => isHovered.value = true,
         onExit: (_) => isHovered.value = false,
         child: InkWell(
+          // 테마에 맞는 호버 색상 적용
+          hoverColor: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.03),
           onTap: () {
             final isShiftPressed =
                 HardwareKeyboard.instance.logicalKeysPressed.contains(LogicalKeyboardKey.shift) ||
@@ -50,14 +60,24 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent, Na
                   children: [
                     Icon(
                       item.type == FileSystemItemType.directory ? Icons.folder : FileConstants.getFileIcon(item.name),
-                      color: item.type == FileSystemItemType.directory ? Colors.amber.shade800 : Colors.blueGrey,
+                      // 폴더 아이콘은 항상 노란색, 파일 아이콘은 테마에 맞게 조정
+                      color:
+                          item.type == FileSystemItemType.directory
+                              ? Colors.amber.shade800
+                              : isDarkMode
+                              ? Colors.blueGrey.shade300
+                              : Colors.blueGrey,
                       size: 24,
                     ),
                     const Gap(12),
                     Expanded(
                       child: Text(
                         item.name,
-                        style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          // 테마에 맞는 텍스트 색상
+                          color: Theme.of(context).textTheme.bodyLarge?.color,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -80,10 +100,16 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent, Na
                         child: Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: .1),
+                            // 테마에 맞는 배경색
+                            color: isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: const Icon(Icons.account_tree, size: 16, color: Colors.black54),
+                          child: Icon(
+                            Icons.account_tree,
+                            size: 16,
+                            // 테마에 맞는 아이콘 색상
+                            color: isDarkMode ? Colors.grey.shade300 : Colors.black54,
+                          ),
                         ),
                       ),
                     ),
@@ -114,7 +140,7 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent, Na
     );
   }
 
-  // 드래그 아이템 생성 시 파일뿐 아니라 디렉토리도 허용
+  // Allow not only files but also directories to be created as drag items
   Future<DragItem?> createDragItemForEntity(FileSystemItem entity) async {
     final dragItem = DragItem(
       localData: {
@@ -126,7 +152,7 @@ class FileItem extends HookConsumerWidget with HomeEvent, DragDropItemsEvent, Na
     return dragItem;
   }
 
-  // _buildDraggableFile → _buildDraggableEntity로 이름 변경 및 사용
+  // _buildDraggableFile → renamed and used as _buildDraggableEntity
   Widget _buildDraggableEntity(BuildContext context, WidgetRef ref, Widget child) {
     return DragItemWidget(
       allowedOperations: () => [DropOperation.copy, DropOperation.move],

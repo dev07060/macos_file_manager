@@ -97,7 +97,6 @@ mixin class DragDropItemsEvent {
                 ),
           );
           if (shouldOverwrite != true) continue;
-          // 삭제
           if (destinationType == FileSystemEntityType.directory) {
             await Directory(destinationPath).delete(recursive: true);
           } else {
@@ -138,7 +137,6 @@ mixin class DragDropItemsEvent {
       final currentDir = ref.read(currentDirectoryProvider);
       await ref.read(fileSystemItemListProvider.notifier).loadDirectory(currentDir);
 
-      // 안전하게 메시지 띄우기
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('undo complete')));
       }

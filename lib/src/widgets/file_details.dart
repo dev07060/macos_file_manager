@@ -3,9 +3,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
+import 'package:macos_file_manager/src/base_event.dart';
+import 'package:macos_file_manager/src/base_state.dart';
 import 'package:macos_file_manager/src/file_operation_event.dart';
-import 'package:macos_file_manager/src/home_event.dart';
-import 'package:macos_file_manager/src/home_state.dart';
+import 'package:macos_file_manager/src/script_event.dart';
 import 'package:macos_file_manager/src/widgets/directory_tree/directory_tree_view.dart';
 import 'package:macos_file_manager/src/widgets/file_header.dart';
 import 'package:macos_file_manager/src/widgets/file_information.dart';
@@ -15,8 +16,7 @@ import 'package:macos_file_manager/src/widgets/image_preview.dart';
 import 'package:macos_file_manager/utils/file_utils.dart';
 import 'package:macos_file_manager/utils/image_utils.dart';
 
-/// Widget that displays the details of a file, including its header, information, and preview.
-class FileDetails extends HookConsumerWidget with HomeState, HomeEvent, FileOperationEvent {
+class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOperationEvent, ScriptEvent {
   FileDetails({super.key});
 
   @override
