@@ -20,7 +20,6 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
     final favorites = ref.watch(favoritesProvider);
     final currentDirectory = ref.watch(currentDirectoryProvider);
 
-    // 테마 모드 상태 확인
     final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
 
     final isExpanded = useState(true);
@@ -31,7 +30,6 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            // 테마에 맞는 색상 사용
             color: Theme.of(context).appBarTheme.backgroundColor,
             border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
           ),
@@ -39,18 +37,13 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
             children: [
               Text(
                 'Favorites',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  // 테마에 맞는 색상 사용
-                  color: Theme.of(context).textTheme.titleMedium?.color,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleMedium?.color),
               ),
               const Spacer(),
               IconButton(
                 icon: Icon(
                   isExpanded.value ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                   size: 20,
-                  // 테마에 맞는 색상 사용
                   color: Theme.of(context).iconTheme.color,
                 ),
                 padding: EdgeInsets.zero,
@@ -70,16 +63,12 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
               padding: const EdgeInsets.all(16.0),
               child: Text(
                 'No favorites',
-                style: TextStyle(
-                  // 테마에 맞는 색상 사용
-                  color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
-                ),
+                style: TextStyle(color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600),
               ),
             )
           else
             Container(
               constraints: const BoxConstraints(maxHeight: _maxCollapsedHeight),
-              // 테마에 맞는 배경색 사용
               color: Theme.of(context).scaffoldBackgroundColor,
               child: ListView.builder(
                 shrinkWrap: true,
@@ -96,21 +85,18 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        // 호버 효과 색상 지정
                         hoverColor: isDarkMode ? Colors.white10 : Colors.black.withOpacity(0.05),
                         onTap: () => navigateToDirectory(ref, favorite.path),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           child: Row(
                             children: [
-                              // 폴더 아이콘 색상은 일관성을 위해 그대로 유지
                               const Icon(Icons.folder, color: Colors.amber),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   favorite.name,
                                   overflow: TextOverflow.ellipsis,
-                                  // 테마에 맞는 텍스트 색상 사용
                                   style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
                                 ),
                               ),
@@ -118,7 +104,6 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    // 현재 위치 표시 배경색 테마에 맞게 조정
                                     color:
                                         isDarkMode
                                             ? Colors.blue.shade800.withOpacity(0.3)
@@ -128,7 +113,6 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
                                   child: Text(
                                     'current location',
                                     style: TextStyle(
-                                      // 현재 위치 표시 텍스트 색상 테마에 맞게 조정
                                       color: isDarkMode ? Colors.blue.shade300 : Colors.blue,
                                       fontSize: 10,
                                       fontWeight: FontWeight.w500,
@@ -145,7 +129,6 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
                 },
               ),
             ),
-        // 테마에 맞는 구분선 색상
         Divider(height: 1, color: Theme.of(context).dividerColor),
       ],
     );

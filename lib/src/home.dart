@@ -46,7 +46,6 @@ class HomePage extends HookConsumerWidget with BaseState, BaseEvent, NavigationE
                       const FavoritesSection(),
                       Container(
                         decoration: BoxDecoration(
-                          // 테마에 맞는 색상 사용
                           color: Theme.of(context).appBarTheme.backgroundColor,
                           border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
                         ),

@@ -10,7 +10,6 @@ import 'package:path/path.dart' as path;
 mixin class FileOperationEvent {
   /// Delete selected items
   Future<void> deleteSelectedItems(WidgetRef ref, BuildContext context) async {
-    // 서비스 인스턴스 가져오기
     final service = ref.read(fileSystemServiceProvider);
 
     final selectedCount = service.getSelectedItemsCount();
