@@ -58,7 +58,7 @@ mixin class ScriptEvent {
                 children: [
                   if (result['success']) Text('exit code: ${result['exitCode'] ?? 'Unknown'}'),
                   const SizedBox(height: 8),
-                  const Text('출력:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text('Output:', style: TextStyle(fontWeight: FontWeight.bold)),
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(4)),

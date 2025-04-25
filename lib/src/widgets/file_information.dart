@@ -11,7 +11,7 @@ class FileInformationWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 테마 모드 상태 확인
+    // Check theme mode state
     final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
 
     return Padding(
@@ -24,7 +24,7 @@ class FileInformationWidget extends ConsumerWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              // 테마에 맞는 텍스트 색상
+              // Text color according to theme
               color: Theme.of(context).textTheme.titleLarge?.color,
             ),
           ),
@@ -60,7 +60,7 @@ class FileInformationWidget extends ConsumerWidget {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                // 테마에 맞는 라벨 색상
+                // Label color according to theme
                 color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade800,
               ),
             ),
@@ -69,7 +69,7 @@ class FileInformationWidget extends ConsumerWidget {
             child: Text(
               value,
               style: TextStyle(
-                // 테마에 맞는 값 색상
+                // Value color according to theme
                 color: Theme.of(context).textTheme.bodyLarge?.color,
               ),
             ),

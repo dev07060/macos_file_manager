@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// 앱 테마 정의
+/// App theme definitions
 class AppTheme {
-  /// 라이트 테마
+  /// Light theme
   static ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     colorScheme: ColorScheme.light(
@@ -18,7 +18,7 @@ class AppTheme {
     listTileTheme: ListTileThemeData(selectedTileColor: Colors.blue.withValues(alpha: .1)),
   );
 
-  /// 다크 테마
+  /// Dark theme
   static ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     colorScheme: ColorScheme.dark(

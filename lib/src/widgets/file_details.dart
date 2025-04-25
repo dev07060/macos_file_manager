@@ -8,7 +8,7 @@ import 'package:macos_file_manager/src/base_event.dart';
 import 'package:macos_file_manager/src/base_state.dart';
 import 'package:macos_file_manager/src/file_operation_event.dart';
 import 'package:macos_file_manager/src/script_event.dart';
-import 'package:macos_file_manager/src/widgets/directory_tree/directory_tree_view.dart';
+import 'package:macos_file_manager/src/widgets/directory_tree/node/directory_tree_view.dart';
 import 'package:macos_file_manager/src/widgets/file_header.dart';
 import 'package:macos_file_manager/src/widgets/file_information.dart';
 import 'package:macos_file_manager/src/widgets/hover_builder.dart';

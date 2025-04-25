@@ -20,12 +20,12 @@ mixin class FileOperationEvent {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirm Delete'),
-          content: Text('정말 선택된 $selectedCount개의 파일을 삭제하시겠습니까?'),
+          content: Text('Are you sure you want to delete $selectedCount selected files?'),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('삭제', style: TextStyle(color: Colors.red)),
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -62,19 +62,19 @@ mixin class FileOperationEvent {
         final controller = TextEditingController(text: '$archiveName.zip');
 
         return AlertDialog(
-          title: const Text('압축 파일 생성'),
+          title: const Text('Create Archive'),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(hintText: 'archive.zip', labelText: '압축 파일 이름'),
+            decoration: const InputDecoration(hintText: 'archive.zip', labelText: 'Archive File Name'),
             autofocus: true,
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('취소')),
+            TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('Cancel')),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop({'fileName': controller.text});
               },
-              child: const Text('압축'),
+              child: const Text('Compress'),
             ),
           ],
         );
@@ -92,11 +92,11 @@ mixin class FileOperationEvent {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('파일이 이미 존재합니다'),
-            content: Text('$zipFileName 파일이 이미 존재합니다. 덮어쓰시겠습니까?'),
+            title: const Text('File Already Exists'),
+            content: Text('The file $zipFileName already exists. Do you want to overwrite it?'),
             actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
-              TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('덮어쓰기')),
+              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Overwrite')),
             ],
           );
         },
@@ -112,7 +112,11 @@ mixin class FileOperationEvent {
       builder: (BuildContext context) {
         return AlertDialog(
           content: Row(
-            children: [const CircularProgressIndicator.adaptive(), const SizedBox(width: 20), const Text('압축 중...')],
+            children: [
+              const CircularProgressIndicator.adaptive(),
+              const SizedBox(width: 20),
+              const Text('Compressing...'),
+            ],
           ),
         );
       },
@@ -161,8 +165,8 @@ mixin class FileOperationEvent {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Error'),
-            content: Text('압축 중 오류가 발생했습니다: $e'),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('확인'))],
+            content: Text('An error occurred during compression: $e'),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK'))],
           );
         },
       );
@@ -203,8 +207,8 @@ mixin class FileOperationEvent {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Error'),
-            content: Text('파일 "$newName"은(는) 이미 존재합니다.'),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('확인'))],
+            content: Text('The file "$newName" already exists.'),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK'))],
           );
         },
       );
@@ -220,8 +224,8 @@ mixin class FileOperationEvent {
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('Error'),
-            content: Text('파일 이름을 변경하지 못했습니다.'),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('확인'))],
+            content: Text('Failed to rename the file.'),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK'))],
           );
         },
       );

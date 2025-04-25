@@ -29,7 +29,7 @@ class ImagePreview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 테마 모드 상태 확인
+    // Check theme mode state
     final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
 
     if (!isFullView) {
@@ -54,7 +54,7 @@ class ImagePreview extends ConsumerWidget {
               child: Text(
                 'Unable to load image',
                 style: TextStyle(
-                  // 테마에 맞는 에러 텍스트 색상
+                  // Error text color according to theme
                   color: isDarkMode ? Colors.redAccent.shade200 : Colors.red,
                 ),
               ),
@@ -74,7 +74,7 @@ class ImagePreview extends ConsumerWidget {
   Widget _buildCroppingView(GlobalKey<ExtendedImageEditorState> editorKey, BuildContext context, bool isDarkMode) {
     return Stack(
       children: [
-        // 이미지 배경색 적용
+        // Apply image background color
         Container(
           color: isDarkMode ? Colors.black26 : Colors.grey.shade50,
           child: Transform.rotate(
@@ -90,7 +90,7 @@ class ImagePreview extends ConsumerWidget {
                   cropRectPadding: const EdgeInsets.all(20.0),
                   hitTestSize: 20.0,
                   cropAspectRatio: 3 / 2,
-                  // 테마에 맞는 크롭 영역 색상
+                  // Crop area color according to theme
                   cornerColor: isDarkMode ? Colors.blueAccent : Colors.white,
                   lineColor: isDarkMode ? Colors.blueAccent : Colors.white,
                 );
@@ -117,7 +117,7 @@ class ImagePreview extends ConsumerWidget {
             children: [
               FloatingActionButton(
                 mini: true,
-                // 테마에 맞는 버튼 색상
+                // Button color according to theme
                 backgroundColor: isDarkMode ? Colors.blue.shade700 : Colors.blue,
                 foregroundColor: Colors.white,
                 onPressed: () async {
@@ -131,7 +131,7 @@ class ImagePreview extends ConsumerWidget {
               const SizedBox(width: 8),
               FloatingActionButton(
                 mini: true,
-                // 테마에 맞는 버튼 색상
+                // Button color according to theme
                 backgroundColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade300,
                 foregroundColor: isDarkMode ? Colors.white : Colors.black87,
                 onPressed: () {
@@ -154,7 +154,7 @@ class ImagePreview extends ConsumerWidget {
           aspectRatio: 1,
           child: Container(
             padding: const EdgeInsets.all(16),
-            // 테마에 맞는 배경색
+            // Background color according to theme
             color: isDarkMode ? Colors.black12 : Colors.transparent,
             child: Transform.rotate(
               angle: rotationAngle.value * math.pi / 180,
@@ -205,7 +205,7 @@ class ImagePreview extends ConsumerWidget {
     await imageFile.writeAsBytes(croppedImageBytes);
 
     if (context.mounted) {
-      // 테마에 맞는 스낵바 스타일
+      // Snackbar style according to theme
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Image cropped and saved successfully'),

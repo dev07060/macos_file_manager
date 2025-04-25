@@ -20,10 +20,10 @@ mixin class BaseEvent {
           title: const Text('Confirm Delete'),
           content: Text('Are you sure you want to delete $selectedCount files?'),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('삭제', style: TextStyle(color: Colors.red)),
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -67,7 +67,7 @@ mixin class BaseEvent {
             autofocus: true,
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('cancel')),
+            TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('Cancel')),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop({'fileName': controller.text});
@@ -93,7 +93,7 @@ mixin class BaseEvent {
             title: const Text('File Already Exists'),
             content: Text('$zipFileName file already exists. Do you want to overwrite it?'),
             actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('cancel')),
+              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
               TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('overwrite')),
             ],
           );
@@ -164,7 +164,7 @@ mixin class BaseEvent {
           return AlertDialog(
             title: const Text('Error'),
             content: Text('error occurred while compressing file(s): $e'),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('confirm'))],
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Confirm'))],
           );
         },
       );
@@ -188,7 +188,7 @@ mixin class BaseEvent {
     }
   }
 
-  /// 사용자에게 간단한 메시지를 보여주는 스낵바 표시
+  /// Show a simple snackbar message to the user
   void showSnackBar(
     BuildContext context,
     String message, {
@@ -200,13 +200,13 @@ mixin class BaseEvent {
     }
   }
 
-  /// 확인 대화상자를 표시
+  /// Show a confirmation dialog
   Future<bool> showConfirmationDialog(
     BuildContext context, {
     required String title,
     required String content,
-    String cancelText = '취소',
-    String confirmText = '확인',
+    String cancelText = 'Cancel',
+    String confirmText = 'Confirm',
     bool isDangerous = false,
   }) async {
     final result = await showDialog<bool>(
@@ -229,11 +229,10 @@ mixin class BaseEvent {
     return result == true;
   }
 
-  /// 작업 실행 중 발생하는 오류를 처리하고 사용자에게 알림
   Future<T?> handleErrorWithDialog<T>(
     Future<T> Function() action,
     BuildContext context, {
-    String title = '오류',
+    String title = 'Error',
     String? successMessage,
     bool showErrorDetails = true,
   }) async {
@@ -250,21 +249,21 @@ mixin class BaseEvent {
             (context) => AlertDialog(
               title: Text(title),
               content: Text(showErrorDetails ? 'Error occurred while action: $e' : 'An error occurred'),
-              actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('confirm'))],
+              actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Confirm'))],
             ),
       );
       return null;
     }
   }
 
-  /// 입력 텍스트를 받는 대화상자 표시
+  /// Show an input dialog
   Future<String?> showInputDialog(
     BuildContext context, {
     required String title,
     String? initialValue,
     String? hintText,
-    String cancelText = '취소',
-    String confirmText = '확인',
+    String cancelText = 'Cancel',
+    String confirmText = 'Confirm',
     bool Function(String)? validator,
   }) async {
     final controller = TextEditingController(text: initialValue);
@@ -299,13 +298,13 @@ mixin class BaseEvent {
     );
   }
 
-  /// 로딩 표시기를 보여주고 작업이 완료되면 닫음
+  /// Show a loading indicator and close it when the task is complete
   Future<T?> showLoadingWhile<T>(
     Future<T> Function() action,
     BuildContext context, {
     String loadingText = 'Processing...',
   }) async {
-    // 로딩 대화상자 표시
+    // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -320,13 +319,13 @@ mixin class BaseEvent {
 
     try {
       final result = await action();
-      // 작업 완료 후 로딩 대화상자 닫기
+      // Close loading dialog after task completion
       if (context.mounted) Navigator.of(context).pop();
       return result;
     } catch (e) {
-      // 오류 발생 시 로딩 대화상자 닫기
+      // Close loading dialog if an error occurs
       if (context.mounted) Navigator.of(context).pop();
-      rethrow; // 오류를 다시 던져서 handleErrorWithDialog에서 처리하도록 함
+      rethrow; // Rethrow the error to be handled by handleErrorWithDialog
     }
   }
 }

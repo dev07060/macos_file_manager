@@ -6,7 +6,7 @@ class TreeViewState {
   final bool isTreeViewActive;
   final String? rootPath;
   final DirectoryNodeData? rootNode;
-  final Offset dragOffset; // 드래그 위치 저장
+  final Offset dragOffset;
 
   const TreeViewState({
     required this.isTreeViewActive,

@@ -17,30 +17,30 @@ class ImageUtils {
       final originalImage = img.decodeImage(fileBytes);
 
       if (originalImage == null) {
-        DialogUtils.showErrorDialog(context, '이미지를 로드할 수 없습니다.');
+        DialogUtils.showErrorDialog(context, 'Failed to load image.');
         return;
       }
 
-      // 이미지 회전
+      // Rotate image
       img.Image rotatedImage = img.copyRotate(originalImage, angle: currentRotation);
-      log('이미지 회전: $currentRotation도');
+      log('Image rotated: $currentRotation degrees');
 
       await _saveRotatedImage(imagePath, rotatedImage);
 
-      // 회전 상태 저장 (저장 후에는 이 상태가 새로운 0도가 됨)
+      // Save rotation state (after saving, this state becomes the new 0 degrees)
       await ImageRotationStorage.saveRotationState(imagePath, 0);
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('이미지가 회전되어 저장되었습니다.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Image has been rotated and saved.')));
       }
     } catch (e) {
       if (context.mounted) {
-        DialogUtils.showErrorDialog(context, '이미지 처리 중 오류가 발생했습니다: $e');
+        DialogUtils.showErrorDialog(context, 'An error occurred while processing the image: $e');
       }
     }
   }
 
-  // 현재 회전 상태 로드
+  // Load current rotation state
   static Future<int> getCurrentRotation(String imagePath) async {
     return ImageRotationStorage.loadRotationState(imagePath);
   }

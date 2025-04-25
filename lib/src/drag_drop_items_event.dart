@@ -65,7 +65,7 @@ mixin class DragDropItemsEvent {
   Future<void> _moveFiles(WidgetRef ref, BuildContext context, List<String> sourcePaths, String targetDirPath) async {
     if (sourcePaths.isEmpty) return;
 
-    // Undo 정보를 저장
+    // Save undo information
     final List<Map<String, String>> movedItems = [];
 
     try {
@@ -85,13 +85,13 @@ mixin class DragDropItemsEvent {
             context: context,
             builder:
                 (context) => AlertDialog(
-                  title: const Text('이미 존재합니다'),
-                  content: Text('$fileName 이(가) 이미 존재합니다. 덮어쓰시겠습니까?'),
+                  title: const Text('Already Exists'),
+                  content: Text('$fileName already exists. Do you want to overwrite it?'),
                   actions: [
-                    TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
+                    TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text('덮어쓰기', style: TextStyle(color: Colors.red)),
+                      child: const Text('Overwrite', style: TextStyle(color: Colors.red)),
                     ),
                   ],
                 ),
@@ -111,13 +111,13 @@ mixin class DragDropItemsEvent {
       // Show success message with Undo
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(sourcePaths.length == 1 ? '이동 완료' : '${sourcePaths.length}개 항목 이동 완료'),
+          content: Text(sourcePaths.length == 1 ? 'Move completed' : '${sourcePaths.length} items moved successfully'),
           action: SnackBarAction(label: 'Undo', onPressed: () => _undoMoveFiles(ref, context, movedItems)),
           duration: const Duration(seconds: 5),
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('이동 중 오류: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error during move: $e')));
     }
   }
 

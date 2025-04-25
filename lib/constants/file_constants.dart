@@ -14,8 +14,9 @@ class FileConstants {
     'tif',
   ];
 
-  // 추가 상수들을 여기에 정의
   static const String shellScriptExtension = 'sh';
+
+  // Define additional constants here
 
   static IconData getFileIcon(String fileName) {
     final extension = fileName.split('.').last.toLowerCase();
