@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
+import 'package:macos_file_manager/providers/tree_view_provider.dart';
 import 'package:macos_file_manager/src/base_event.dart';
 import 'package:macos_file_manager/src/base_state.dart';
 import 'package:macos_file_manager/src/navigation_event.dart';
@@ -84,6 +85,15 @@ class HomePage extends HookConsumerWidget with BaseState, BaseEvent, NavigationE
                                 ),
                               ),
                             ],
+
+                            IconButton(
+                              icon: const Icon(Icons.account_tree, size: 20),
+                              tooltip: 'Show tree-view from dir',
+                              onPressed: () {
+                                ref.read(searchQueryProvider.notifier).state = null;
+                                ref.read(treeViewNotifierProvider.notifier).showTreeView(path);
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -99,7 +109,7 @@ class HomePage extends HookConsumerWidget with BaseState, BaseEvent, NavigationE
                   ),
                 ),
                 // Divider
-                Container(width: 1, color: Colors.grey.shade300),
+                Container(width: 1, color: Theme.of(context).dividerColor),
                 // File details section (right side)
                 Expanded(child: FileDetails()),
               ],

@@ -1,11 +1,14 @@
 import 'dart:ui';
 
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/directory_node_data.dart';
 import 'package:macos_file_manager/services/directory_service.dart';
 import 'package:macos_file_manager/state/tree_view_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'tree_view_provider.g.dart';
+
+final selectedPathProvider = StateProvider<String?>((ref) => null);
 
 @riverpod
 class TreeViewNotifier extends _$TreeViewNotifier {
@@ -18,16 +21,17 @@ class TreeViewNotifier extends _$TreeViewNotifier {
 
   Future<void> showTreeView(String rootPath) async {
     state = const AsyncValue.loading();
-
     try {
       final rootNode = await _directoryService.loadDirectoryStructure(rootPath);
       state = AsyncValue.data(TreeViewState(isTreeViewActive: true, rootPath: rootPath, rootNode: rootNode));
     } catch (e, st) {
-      state = AsyncValue.error(e, st);
+      state = AsyncValue.error(e is Exception ? e : Exception('Too many nodes to load tree-view'), st);
     }
   }
 
   void selectNode(String path) {
+    ref.read(selectedPathProvider.notifier).state = path;
+
     final currentState = state.value;
     if (currentState == null) return;
 
@@ -37,7 +41,7 @@ class TreeViewNotifier extends _$TreeViewNotifier {
   }
 
   DirectoryNodeData _updateSelection(DirectoryNodeData node, String selectedPath) {
-    bool isSelected = node.path == selectedPath;
+    final bool isSelected = node.path == selectedPath;
 
     return DirectoryNodeData(
       name: node.name,
@@ -113,6 +117,21 @@ class TreeViewNotifier extends _$TreeViewNotifier {
       _collapseAllRecursive(currentState.rootNode);
       state = AsyncValue.data(currentState);
     });
+  }
+
+  void expandAll() {
+    state.whenData((currentState) {
+      _expandAllRecursive(currentState.rootNode);
+      state = AsyncValue.data(currentState);
+    });
+  }
+
+  void _expandAllRecursive(DirectoryNodeData? node) {
+    if (node == null) return;
+    node.isExpanded = true;
+    for (final child in node.children) {
+      _expandAllRecursive(child);
+    }
   }
 
   void _collapseAllRecursive(DirectoryNodeData? node) {
