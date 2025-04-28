@@ -20,12 +20,11 @@ class DirectoryTreeView extends HookConsumerWidget {
     final transformationController = useMemoized(() => TransformationController(), []);
     final searchController = useTextEditingController();
     final scale = useState<double>(1.0);
+    final isTreeExpanded = useState<bool>(false);
     final searchDebounce = useState<Timer?>(null);
-    final treeIndentation = ref.watch(treeIndentationProvider);
     final treeViewProvider = ref.read(treeViewNotifierProvider.notifier);
     final treeState = ref.watch(treeViewNotifierProvider);
     final searchQuery = ref.watch(searchQueryProvider);
-
     final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
 
     useEffect(() {
@@ -67,12 +66,17 @@ class DirectoryTreeView extends HookConsumerWidget {
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Theme.of(context).drawerTheme.backgroundColor,
         onPressed: () {
-          scale.value = 0.5;
+          scale.value = isTreeExpanded.value ? 1.0 : 0.5;
+          isTreeExpanded.value = isTreeExpanded.value ? false : true;
           transformationController.value = Matrix4.identity()..scale(scale.value);
-          treeViewProvider.expandAll();
+          isTreeExpanded.value ? treeViewProvider.expandAll() : treeViewProvider.collapseAll();
         },
-        child: Icon(Icons.fullscreen, color: Theme.of(context).iconTheme.color),
+        child: Icon(
+          !isTreeExpanded.value ? Icons.fullscreen : Icons.fullscreen_exit,
+          color: Theme.of(context).iconTheme.color,
+        ),
       ),
       body: Container(
         color: Theme.of(context).scaffoldBackgroundColor,
@@ -87,32 +91,34 @@ class DirectoryTreeView extends HookConsumerWidget {
                   Expanded(
                     child: FSearchBar(
                       variant: FSearchBarVariant.normal,
-                      hintText: 'You can search directory name here within the tree',
+                      hintText: 'You can search directory name here within the tree via press "enter"',
                       controller: searchController,
                       onChanged: (value) {
-                        searchDebounce.value?.cancel();
-                        searchDebounce.value = Timer(const Duration(milliseconds: 300), () {
-                          if (value.isEmpty) {
-                            ref.read(searchQueryProvider.notifier).state = null;
-                          } else {
-                            ref.read(searchQueryProvider.notifier).state = value;
-                          }
-                        });
+                        // Do nothing or implement live preview if needed
+                      },
+                      onSubmitted: (value) {
+                        if (value.isEmpty) {
+                          ref.read(searchQueryProvider.notifier).state = null;
+                        } else {
+                          ref.read(searchQueryProvider.notifier).state = value;
+                        }
                       },
                       onClear: () {
-                        searchDebounce.value?.cancel();
                         ref.read(searchQueryProvider.notifier).state = null;
+                        searchController.clear();
                       },
                       isDarkMode: isDarkMode,
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
+                    icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
                     onPressed: () {
-                      searchDebounce.value?.cancel();
-                      searchController.clear();
-                      ref.read(searchQueryProvider.notifier).state = null;
-                      treeViewProvider.hideTreeView();
+                      final value = searchController.text;
+                      if (value.isEmpty) {
+                        ref.read(searchQueryProvider.notifier).state = null;
+                      } else {
+                        ref.read(searchQueryProvider.notifier).state = value;
+                      }
                     },
                   ),
                 ],

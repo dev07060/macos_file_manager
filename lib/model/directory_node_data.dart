@@ -20,7 +20,7 @@ class DirectoryNodeData {
 
   static Future<DirectoryNodeData> fromDirectory(
     String dirPath, {
-    int maxNodes = 1000,
+    int maxNodes = 500,
     Stopwatch? stopwatch,
     Duration timeout = const Duration(seconds: 10),
     int currentCount = 0,
