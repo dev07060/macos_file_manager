@@ -112,10 +112,10 @@ lib/
 - Use the toolbar buttons to navigate back, forward, up a directory, or to your home directory
 - Drag and drop files to move them between directories
 - Use keyboard modifiers (Shift, Ctrl) to select multiple files
-- Right-click or use toolbar icons for additional operations (delete, compress, etc.)
+- use toolbar icons for additional operations (execute delete, compress, treeview)
 - Add frequently used directories to favorites for quick access
 - Execute shell scripts directly from the interface (with security confirmation)
-- Preview, crop, rotate, and extract text from images in the preview panel
+- Preview, crop, rotate images in the preview panel also save the images after edited
 
 ## Dependencies
 
@@ -127,7 +127,6 @@ lib/
 - super_drag_and_drop - For enhanced drag and drop functionality
 - archive - For file compression/archiving operations
 - extended_image - For advanced image preview, crop, and rotate
-- flusseract (or tesseract_ocr) - For OCR functionality
 
 ## Security Notes
 

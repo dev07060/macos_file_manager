@@ -65,8 +65,8 @@ class DirectoryTreeView extends HookConsumerWidget {
     }
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).drawerTheme.backgroundColor,
+      floatingActionButton: FloatingActionButton.small(
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         onPressed: () {
           scale.value = isTreeExpanded.value ? 1.0 : 0.5;
           isTreeExpanded.value = isTreeExpanded.value ? false : true;
@@ -111,14 +111,12 @@ class DirectoryTreeView extends HookConsumerWidget {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.search, color: Theme.of(context).iconTheme.color),
+                    icon: Icon(Icons.close, color: Theme.of(context).iconTheme.color),
                     onPressed: () {
-                      final value = searchController.text;
-                      if (value.isEmpty) {
-                        ref.read(searchQueryProvider.notifier).state = null;
-                      } else {
-                        ref.read(searchQueryProvider.notifier).state = value;
-                      }
+                      searchDebounce.value?.cancel();
+                      searchController.clear();
+                      ref.read(searchQueryProvider.notifier).state = null;
+                      treeViewProvider.hideTreeView();
                     },
                   ),
                 ],
