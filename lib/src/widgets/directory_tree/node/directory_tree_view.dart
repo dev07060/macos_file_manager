@@ -91,7 +91,7 @@ class DirectoryTreeView extends HookConsumerWidget {
                   Expanded(
                     child: FSearchBar(
                       variant: FSearchBarVariant.normal,
-                      hintText: 'You can search directory name here within the tree via press "enter"',
+                      hintText: 'You can search directory name here within the tree by press "enter"',
                       controller: searchController,
                       onChanged: (value) {
                         // Do nothing or implement live preview if needed

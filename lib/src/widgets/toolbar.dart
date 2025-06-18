@@ -76,10 +76,12 @@ class Toolbar extends HookConsumerWidget with BaseState, NavigationEvent, Favori
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    formatPath(currentDir),
-                    style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color),
-                    overflow: TextOverflow.ellipsis,
+                  Expanded(
+                    child: Text(
+                      formatPath(currentDir),
+                      style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   IconButton(
                     iconSize: 20,

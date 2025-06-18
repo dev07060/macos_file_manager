@@ -24,6 +24,7 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedItem = selectedFileItem(ref);
     final treeViewState = ref.watch(treeViewNotifierProvider);
+    final treeViewProvider = ref.read(treeViewNotifierProvider.notifier);
     final textEditingController = useTextEditingController();
     final focusNode = useFocusNode();
 
@@ -212,8 +213,15 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
             ),
           ),
       error:
-          (error, stack) => Center(
-            child: Text('Error: $error', style: TextStyle(color: isDarkMode ? Colors.red.shade300 : Colors.red)),
+          (error, stack) => Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Error: $error', style: TextStyle(color: isDarkMode ? Colors.red.shade300 : Colors.red)),
+                TextButton(child: const Text('go back'), onPressed: () => treeViewProvider.hideTreeView()),
+              ],
+            ),
           ),
     );
   }
