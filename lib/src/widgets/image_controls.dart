@@ -70,7 +70,7 @@ class ImageControlsWidget extends StatelessWidget {
               icon: const Icon(Icons.save, size: 20),
               tooltipText: 'save rotated image',
               onPressed:
-                  isCropping.value || rotationAngle.value == lastSavedAngle.value
+                  isCropping.value || rotationAngle.value == 0
                       ? null
                       : () async {
                         await ImageUtils.rotateAndSaveImage(imagePath, rotationAngle.value, context);

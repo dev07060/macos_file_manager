@@ -7,13 +7,14 @@ import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
 import 'package:macos_file_manager/src/base_event.dart';
 import 'package:macos_file_manager/src/base_state.dart';
+import 'package:macos_file_manager/src/file_operation_event.dart';
 import 'package:macos_file_manager/src/navigation_event.dart';
 import 'package:macos_file_manager/src/widgets/favorites_section.dart';
 import 'package:macos_file_manager/src/widgets/file_details.dart';
 import 'package:macos_file_manager/src/widgets/file_item.dart';
 import 'package:macos_file_manager/src/widgets/toolbar.dart';
 
-class HomePage extends HookConsumerWidget with BaseState, BaseEvent, NavigationEvent {
+class HomePage extends HookConsumerWidget with BaseState, BaseEvent, NavigationEvent, FileOperationEvent {
   const HomePage({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -92,6 +93,15 @@ class HomePage extends HookConsumerWidget with BaseState, BaseEvent, NavigationE
                               onPressed: () {
                                 ref.read(searchQueryProvider.notifier).state = null;
                                 ref.read(treeViewNotifierProvider.notifier).showTreeView(path);
+                              },
+                            ),
+
+                            IconButton(
+                              icon: const Icon(Icons.auto_awesome, size: 20),
+                              tooltip: 'Organize files with AI',
+                              onPressed: () {
+                                // 아직 구현되지 않은 이벤트 핸들러 호출
+                                organizeDirectoryWithAI(ref, context);
                               },
                             ),
                           ],

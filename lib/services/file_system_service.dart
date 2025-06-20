@@ -7,7 +7,8 @@ import 'package:path/path.dart' as path;
 
 // TODO: This code is for refactoring and should be moved to a separate file
 class FileSystemService {
-  final WidgetRef ref;
+  // WidgetRef 대신 Ref (또는 ProviderRef)를 사용합니다.
+  final Ref ref;
 
   FileSystemService(this.ref);
 
@@ -77,5 +78,6 @@ class FileSystemService {
 }
 
 final fileSystemServiceProvider = Provider<FileSystemService>((ref) {
-  return FileSystemService(ref as WidgetRef);
+  // ref를 그대로 전달합니다. Provider 콜백의 ref는 ProviderRef 타입입니다.
+  return FileSystemService(ref);
 });
