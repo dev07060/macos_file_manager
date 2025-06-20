@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Sensitive environment and key files
+assets/env/.dev.env
+assets/keys/service-account-key.json
+/android/app/profile
+/android/app/release
