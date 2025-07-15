@@ -2,7 +2,10 @@ import 'dart:io';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
+import 'package:macos_file_manager/services/vertex_ai_service.dart';
 import 'package:path/path.dart' as path;
+import 'dart:developer';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Provider for the list of file system items
 final fileSystemItemListProvider = NotifierProvider<FileSystemItemList, List<FileSystemItem>>(FileSystemItemList.new);
@@ -90,6 +93,104 @@ class DirectoryHistoryNotifier extends StateNotifier<DirectoryHistory> {
     final parent = path.dirname(state.currentPath);
     if (parent != state.currentPath) {
       navigateTo(parent);
+    }
+  }
+}
+
+// 파일 정리 설정 provider 추가
+final fileOrganizationSettingsProvider = StateNotifierProvider<FileOrganizationSettingsNotifier, FileOrganizationSettings>((ref) {
+  return FileOrganizationSettingsNotifier();
+});
+
+class FileOrganizationSettings {
+  final OrganizationMethod? preferredMethod;
+  final String? lastCustomPrompt;
+  final bool rememberChoice;
+
+  const FileOrganizationSettings({
+    this.preferredMethod,
+    this.lastCustomPrompt,
+    this.rememberChoice = false,
+  });
+
+  FileOrganizationSettings copyWith({
+    OrganizationMethod? preferredMethod,
+    String? lastCustomPrompt,
+    bool? rememberChoice,
+  }) {
+    return FileOrganizationSettings(
+      preferredMethod: preferredMethod ?? this.preferredMethod,
+      lastCustomPrompt: lastCustomPrompt ?? this.lastCustomPrompt,
+      rememberChoice: rememberChoice ?? this.rememberChoice,
+    );
+  }
+}
+
+class FileOrganizationSettingsNotifier extends StateNotifier<FileOrganizationSettings> {
+  FileOrganizationSettingsNotifier() : super(const FileOrganizationSettings()) {
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final methodIndex = prefs.getInt('preferred_organization_method');
+      final lastCustomPrompt = prefs.getString('last_custom_prompt');
+      final rememberChoice = prefs.getBool('remember_organization_choice') ?? false;
+
+      state = FileOrganizationSettings(
+        preferredMethod: methodIndex != null ? OrganizationMethod.values[methodIndex] : null,
+        lastCustomPrompt: lastCustomPrompt,
+        rememberChoice: rememberChoice,
+      );
+    } catch (e) {
+      developer.log('Error loading organization settings: $e');
+    }
+  }
+
+  Future<void> savePreferredMethod(OrganizationMethod method) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('preferred_organization_method', method.index);
+      
+      state = state.copyWith(preferredMethod: method);
+    } catch (e) {
+      developer.log('Error saving preferred method: $e');
+    }
+  }
+
+  Future<void> saveCustomPrompt(String prompt) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('last_custom_prompt', prompt);
+      
+      state = state.copyWith(lastCustomPrompt: prompt);
+    } catch (e) {
+      developer.log('Error saving custom prompt: $e');
+    }
+  }
+
+  Future<void> setRememberChoice(bool remember) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('remember_organization_choice', remember);
+      
+      state = state.copyWith(rememberChoice: remember);
+    } catch (e) {
+      developer.log('Error saving remember choice: $e');
+    }
+  }
+
+  void clearSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('preferred_organization_method');
+      await prefs.remove('last_custom_prompt');
+      await prefs.remove('remember_organization_choice');
+      
+      state = const FileOrganizationSettings();
+    } catch (e) {
+      developer.log('Error clearing settings: $e');
     }
   }
 }
