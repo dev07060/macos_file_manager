@@ -23,7 +23,7 @@ mixin class FileOperationEvent {
       return;
     }
 
-    // AI 분석 중 로딩 다이얼로그 표시
+    // Show loading dialog during AI analysis
     if (!context.mounted) return;
     showDialog(
       context: context,
@@ -34,19 +34,19 @@ mixin class FileOperationEvent {
           ),
     );
 
-    // 되돌리기를 위한 파일 이동 기록
+    // Log of moved files for undo functionality
     final List<Map<String, String>> movedFilesLog = [];
 
     try {
-      // vertexAIServiceProvider가 FutureProvider로 변경되었으므로, .future를 await하여 서비스 인스턴스를 안전하게 가져옵니다.
+      // Since vertexAIServiceProvider is now a FutureProvider, await its .future to safely get the service instance.
       final aiService = await ref.read(vertexAIServiceProvider.future);
 
-      // 3. 파일 분류 작업
+      // 3. File classification task
       final Map<String, String> fileToCategoryMap = {};
       for (final item in fileSystemItems) {
         if (item.type == FileSystemItemType.file) {
           String snippet = "";
-          // 텍스트 기반 파일이면 내용 일부를 읽음 (비용 절약)
+          // Read a snippet of text-based files to save costs
           try {
             if (!FileConstants.imageExtensions.contains(item.fileExtension.toLowerCase())) {
               final file = File(item.path);
@@ -67,7 +67,7 @@ mixin class FileOperationEvent {
       }
 
       if (!context.mounted) return;
-      Navigator.of(context).pop(); // AI 분석 중 로딩 다이얼로그 닫기
+      Navigator.of(context).pop(); // Close the AI analysis loading dialog
 
       if (fileToCategoryMap.isEmpty) {
         if (context.mounted) {
@@ -76,7 +76,7 @@ mixin class FileOperationEvent {
         return;
       }
 
-      // 4. 사용자에게 확인받기
+      // 4. Get confirmation from the user
       if (!context.mounted) return;
       // ignore: use_build_context_synchronously
       final bool? confirmed = await showDialog<bool>(
@@ -85,14 +85,13 @@ mixin class FileOperationEvent {
           return AlertDialog(
             title: const Text('AI 파일 정리 제안'),
             content: SizedBox(
-              // 다이얼로그 내용의 최대 높이 제한을 위해 SizedBox 사용
+              // Use SizedBox to limit the maximum height of the dialog content
               width: double.maxFinite,
-              height: MediaQuery.of(context).size.height * 0.5, // 화면 높이의 50%로 제한
+              height: MediaQuery.of(context).size.height * 0.5, // Limit to 50% of the screen height
               child: SingleChildScrollView(
                 child: Builder(
                   builder: (context) {
-                    // Builder를 사용하여 올바른 context에서 MediaQuery 사용
-                    // 카테고리별 파일 목록 생성
+                    // Create a file list for each category
                     final Map<String, List<String>> categoryToFileList = {};
                     fileToCategoryMap.forEach((filePath, category) {
                       categoryToFileList.putIfAbsent(category, () => []).add(filePath);
@@ -136,9 +135,9 @@ mixin class FileOperationEvent {
         },
       );
 
-      // 5. 파일 이동 실행
+      // 5. Execute file moving
       if (confirmed == true) {
-        // 파일 이동 중 로딩 다이얼로그 표시
+        // Show loading dialog during file moving
         if (!context.mounted) return;
         showDialog(
           context: context,
@@ -155,7 +154,7 @@ mixin class FileOperationEvent {
             final category = entry.value;
             final targetDir = path.join(currentDir, category);
 
-            // 대상 폴더가 없으면 생성
+            // Create the target folder if it doesn't exist
             await Directory(targetDir).create(recursive: true);
 
             final fileName = path.basename(sourcePath);
@@ -166,18 +165,18 @@ mixin class FileOperationEvent {
           }
         } finally {
           if (context.mounted) {
-            Navigator.of(context).pop(); // 파일 이동 중 로딩 다이얼로그 닫기
+            Navigator.of(context).pop(); // Close the file moving loading dialog
           }
         }
 
         await ref.read(fileSystemServiceProvider).loadDirectory(currentDir);
         if (!context.mounted) return;
 
-        // 파일 정리 완료 후 되돌리기/유지하기 팝업 표시
+        // After file organization is complete, show a popup to undo/keep
         // ignore: use_build_context_synchronously
         final String? action = await showDialog<String>(
           context: context,
-          barrierDismissible: false, // 사용자가 선택하도록 강제
+          barrierDismissible: false, // Force the user to make a selection
           builder: (context) {
             return AlertDialog(
               title: const Text('파일 정리 완료'),
@@ -192,7 +191,7 @@ mixin class FileOperationEvent {
 
         if (action == 'undo') {
           if (!context.mounted) return;
-          // 되돌리기 중 로딩 다이얼로그 표시
+          // Show loading dialog during undo
           showDialog(
             context: context,
             barrierDismissible: false,
@@ -205,23 +204,18 @@ mixin class FileOperationEvent {
             for (final logEntry in movedFilesLog) {
               final originalPath = logEntry['originalPath']!;
               final newPath = logEntry['newPath']!;
-              // 원래 경로의 부모 디렉토리가 존재하는지 확인 (일반적으로 rename은 신경쓰지 않지만, 만약을 위해)
-              // final originalParentDir = Directory(path.dirname(originalPath));
-              // if (!await originalParentDir.exists()) {
-              //   await originalParentDir.create(recursive: true);
-              // }
               await File(newPath).rename(originalPath);
             }
           } finally {
             if (context.mounted) {
-              Navigator.of(context).pop(); // 되돌리기 중 로딩 다이얼로그 닫기
+              Navigator.of(context).pop(); // Close the undo loading dialog
             }
           }
           await ref.read(fileSystemServiceProvider).loadDirectory(currentDir);
           if (!context.mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('파일 위치를 되돌렸습니다.')));
         } else if (action == 'keep') {
-          // 파일 목록은 이미 새로고침됨
+          // The file list is already refreshed
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('파일 정리가 유지됩니다.')));
           }
@@ -229,11 +223,11 @@ mixin class FileOperationEvent {
       }
     } catch (e) {
       developer.log('Error during AI file organization: $e');
-      // AI 분석 중 로딩 다이얼로그가 아직 떠있을 수 있으므로, 여기서 닫아줍니다.
-      // Navigator.canPop()으로 현재 최상단 다이얼로그가 AI 분석 다이얼로그인지 확인하는 더 안전한 방법이 필요할 수 있으나,
-      // 현재 흐름상 AI 분석 다이얼로그 이후 다른 다이얼로그가 뜨기 전에 에러가 나면 이 catch로 올 가능성이 높습니다.
+      // The AI analysis loading dialog might still be open, so close it here.
+      // A safer method might be needed to check if the top-most dialog is the AI analysis dialog using Navigator.canPop(),
+      // but in the current flow, it's likely to enter this catch block if an error occurs after the AI analysis dialog and before another dialog appears.
       if (context.mounted && Navigator.of(context).canPop()) {
-        // AI 분석 다이얼로그 닫기 시도
+        // Attempt to close the AI analysis dialog
         Navigator.of(context).pop();
       }
       if (context.mounted) {
