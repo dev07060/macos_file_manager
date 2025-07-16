@@ -89,6 +89,7 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
               style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
             ),
           );
+          // return CefWebView(initialUrl: 'https://www.google.com');
         }
         final isShellScript = FileUtils.isShellScript(selectedItem);
         final isImage = FileUtils.isImageFile(selectedItem);
