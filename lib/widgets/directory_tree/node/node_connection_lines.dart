@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:macos_file_manager/src/widgets/directory_tree/custom_painter/tree_line_painter.dart';
+import 'package:macos_file_manager/widgets/directory_tree/custom_painter/tree_line_painter.dart';
 
 /// Widget that draws the connection lines between nodes.
 class NodeConnectionLines extends StatefulWidget {

@@ -3,18 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/events/base_event.dart';
+import 'package:macos_file_manager/events/file_operation_event.dart';
+import 'package:macos_file_manager/events/file_organization_event.dart';
+import 'package:macos_file_manager/events/navigation_event.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
-import 'package:macos_file_manager/src/base_event.dart';
-import 'package:macos_file_manager/src/base_state.dart';
-import 'package:macos_file_manager/src/file_operation_event.dart';
-import 'package:macos_file_manager/src/file_organization_event.dart';
-import 'package:macos_file_manager/src/navigation_event.dart';
-import 'package:macos_file_manager/src/widgets/favorites_section.dart';
-import 'package:macos_file_manager/src/widgets/file_category_settings.dart';
-import 'package:macos_file_manager/src/widgets/file_details.dart';
-import 'package:macos_file_manager/src/widgets/file_item.dart';
-import 'package:macos_file_manager/src/widgets/toolbar.dart';
+import 'package:macos_file_manager/state/base_state.dart';
+import 'package:macos_file_manager/widgets/favorites_section.dart';
+import 'package:macos_file_manager/widgets/file_category_settings.dart';
+import 'package:macos_file_manager/widgets/file_details.dart';
+import 'package:macos_file_manager/widgets/file_item.dart';
+import 'package:macos_file_manager/widgets/toolbar.dart';
 
 class HomePage extends HookConsumerWidget
     with BaseState, BaseEvent, NavigationEvent, FileOperationEvent, FileOrganizationEvent {
@@ -91,12 +91,22 @@ class HomePage extends HookConsumerWidget
                             ],
 
                             IconButton(
-                              icon: const Icon(Icons.account_tree, size: 20),
-                              tooltip: 'Show tree-view from dir',
-                              onPressed: () {
-                                ref.read(searchQueryProvider.notifier).state = null;
-                                ref.read(treeViewNotifierProvider.notifier).showTreeView(path);
-                              },
+                              icon: Icon(
+                                Icons.account_tree,
+                                size: 20,
+                                color: selectedCount > 1 ? Theme.of(context).disabledColor : null,
+                              ),
+                              tooltip:
+                                  selectedCount > 1
+                                      ? 'Tree-view disabled (multiple items selected)'
+                                      : 'Show tree-view from dir',
+                              onPressed:
+                                  selectedCount > 1
+                                      ? null
+                                      : () {
+                                        ref.read(searchQueryProvider.notifier).state = null;
+                                        ref.read(treeViewNotifierProvider.notifier).showTreeView(path);
+                                      },
                             ),
 
                             IconButton(

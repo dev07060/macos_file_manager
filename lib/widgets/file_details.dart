@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/events/base_event.dart';
+import 'package:macos_file_manager/events/file_operation_event.dart';
+import 'package:macos_file_manager/events/script_event.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/theme_provider.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
-import 'package:macos_file_manager/src/base_event.dart';
-import 'package:macos_file_manager/src/base_state.dart';
-import 'package:macos_file_manager/src/file_operation_event.dart';
-import 'package:macos_file_manager/src/script_event.dart';
-import 'package:macos_file_manager/src/widgets/directory_tree/node/directory_tree_view.dart';
-import 'package:macos_file_manager/src/widgets/file_header.dart';
-import 'package:macos_file_manager/src/widgets/file_information.dart';
-import 'package:macos_file_manager/src/widgets/hover_builder.dart';
-import 'package:macos_file_manager/src/widgets/image_controls.dart';
-import 'package:macos_file_manager/src/widgets/image_preview.dart';
+import 'package:macos_file_manager/state/base_state.dart';
 import 'package:macos_file_manager/utils/file_utils.dart';
 import 'package:macos_file_manager/utils/image_utils.dart';
+import 'package:macos_file_manager/widgets/directory_tree/node/directory_tree_view.dart';
+import 'package:macos_file_manager/widgets/file_header.dart';
+import 'package:macos_file_manager/widgets/file_information.dart';
+import 'package:macos_file_manager/widgets/hover_builder.dart';
+import 'package:macos_file_manager/widgets/image_controls.dart';
+import 'package:macos_file_manager/widgets/image_preview.dart';
 
 class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOperationEvent, ScriptEvent {
   FileDetails({super.key});

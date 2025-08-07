@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/events/drag_drop_items_event.dart';
+import 'package:macos_file_manager/events/navigation_event.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/favorites_provider.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/theme_provider.dart';
-import 'package:macos_file_manager/src/drag_drop_items_event.dart';
-import 'package:macos_file_manager/src/navigation_event.dart';
 import 'package:path/path.dart' as path;
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 

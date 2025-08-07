@@ -1,16 +1,16 @@
 {
   // fvm 설정
   // flutterSdkPaths를 다음과 같이 설정 안하면 global flutter sdk를 사용하게 됨
-  "dart.flutterSdkPath": ".fvm/flutter_sdk",
-  "dart.flutterSdkPaths": [
-    ".fvm/versions"
-  ],
-  "search.exclude": {
-    "**/.fvm": true
-  },
-  "files.watcherExclude": {
-    "**/.fvm": true
-  },
+  // "dart.flutterSdkPath": ".fvm/flutter_sdk",
+  // "dart.flutterSdkPaths": [
+  //   ".fvm/versions"
+  // ],
+  // "search.exclude": {
+  //   "**/.fvm": true
+  // },
+  // "files.watcherExclude": {
+  //   "**/.fvm": true
+  // },
   // editor 설정
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
@@ -23,4 +23,5 @@
   "github.copilot.advanced": {
     
   },
+  "geminicodeassist.geminiApiKey": "AIzaSyArQRN43TANWbuOSt0SdJGOf5gHCwcFEpc"
 }

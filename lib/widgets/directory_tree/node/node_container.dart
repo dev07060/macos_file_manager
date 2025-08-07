@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:macos_file_manager/model/directory_node_data.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
-import 'package:macos_file_manager/src/widgets/directory_tree/node/directory_node.dart';
+import 'package:macos_file_manager/widgets/directory_tree/node/directory_node.dart';
 
 class NodeContainer extends StatelessWidget {
   final DirectoryNodeData node;

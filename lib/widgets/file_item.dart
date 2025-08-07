@@ -4,13 +4,13 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:gap/gap.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/constants/file_constants.dart';
+import 'package:macos_file_manager/events/base_event.dart';
+import 'package:macos_file_manager/events/drag_drop_items_event.dart';
+import 'package:macos_file_manager/events/navigation_event.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/theme_provider.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
-import 'package:macos_file_manager/src/base_event.dart';
-import 'package:macos_file_manager/src/drag_drop_items_event.dart';
-import 'package:macos_file_manager/src/navigation_event.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 class FileItem extends HookConsumerWidget with BaseEvent, DragDropItemsEvent, NavigationEvent {

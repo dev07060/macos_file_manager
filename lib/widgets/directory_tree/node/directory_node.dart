@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/events/drag_drop_items_event.dart';
 import 'package:macos_file_manager/model/directory_node_data.dart';
 import 'package:macos_file_manager/providers/theme_provider.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
-import 'package:macos_file_manager/src/base_state.dart';
-import 'package:macos_file_manager/src/drag_drop_items_event.dart';
-import 'package:macos_file_manager/src/widgets/directory_tree/node/node_connection_lines.dart';
-import 'package:macos_file_manager/src/widgets/directory_tree/node/node_container.dart';
+import 'package:macos_file_manager/state/base_state.dart';
+import 'package:macos_file_manager/widgets/directory_tree/node/node_connection_lines.dart';
+import 'package:macos_file_manager/widgets/directory_tree/node/node_container.dart';
 import 'package:super_drag_and_drop/super_drag_and_drop.dart';
 
 final treeViewUpdateProvider = StateProvider<int>((ref) => 0);

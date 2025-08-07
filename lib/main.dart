@@ -5,9 +5,9 @@ import 'package:macos_file_manager/providers/theme_provider.dart';
 import 'package:macos_file_manager/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'home.dart';
 import 'providers/favorites_provider.dart' as favorites_provider;
 import 'providers/file_category_config_provider.dart' as file_category_provider;
-import 'src/home.dart';
 
 Future main() async {
   WidgetsFlutterBinding.ensureInitialized();

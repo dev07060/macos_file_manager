@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/events/favorite_event.dart';
+import 'package:macos_file_manager/events/navigation_event.dart';
 import 'package:macos_file_manager/providers/favorites_provider.dart';
 import 'package:macos_file_manager/providers/theme_provider.dart';
-import 'package:macos_file_manager/src/base_state.dart';
-import 'package:macos_file_manager/src/favorite_event.dart';
-import 'package:macos_file_manager/src/navigation_event.dart';
+import 'package:macos_file_manager/state/base_state.dart';
 
 class Toolbar extends HookConsumerWidget with BaseState, NavigationEvent, FavoriteEvent {
   const Toolbar({super.key});

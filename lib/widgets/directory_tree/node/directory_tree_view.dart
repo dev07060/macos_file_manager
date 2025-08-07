@@ -7,8 +7,8 @@ import 'package:macos_file_manager/model/directory_node_data.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/theme_provider.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
-import 'package:macos_file_manager/src/widgets/directory_tree/node/directory_node.dart';
-import 'package:macos_file_manager/src/widgets/search_bar.dart';
+import 'package:macos_file_manager/widgets/directory_tree/node/directory_node.dart';
+import 'package:macos_file_manager/widgets/search_bar.dart';
 
 class DirectoryTreeView extends HookConsumerWidget {
   final String rootPath;

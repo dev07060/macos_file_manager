@@ -88,7 +88,7 @@ class _ExtensionMappingTab extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: .3),
             border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
           ),
           child: Row(
@@ -135,8 +135,11 @@ class _ExtensionMappingTab extends ConsumerWidget {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.3))),
-                  color: index % 2 == 0 ? null : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.1),
+                  border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: .3))),
+                  color:
+                      index % 2 == 0
+                          ? null
+                          : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: .1),
                 ),
                 child: Row(
                   children: [
@@ -153,10 +156,14 @@ class _ExtensionMappingTab extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: mapping.isCustom ? Colors.blue.withOpacity(0.1) : Colors.grey.withOpacity(0.1),
+                          color:
+                              mapping.isCustom ? Colors.blue.withValues(alpha: .1) : Colors.grey.withValues(alpha: .1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: mapping.isCustom ? Colors.blue.withOpacity(0.3) : Colors.grey.withOpacity(0.3),
+                            color:
+                                mapping.isCustom
+                                    ? Colors.blue.withValues(alpha: .3)
+                                    : Colors.grey.withValues(alpha: .3),
                           ),
                         ),
                         child: Text(
