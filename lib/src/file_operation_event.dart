@@ -7,8 +7,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/constants/file_constants.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
+import 'package:macos_file_manager/services/file_organization_service.dart';
 import 'package:macos_file_manager/services/file_system_service.dart';
-import 'package:macos_file_manager/services/vertex_ai_service.dart';
 import 'package:path/path.dart' as path;
 
 mixin class FileOperationEvent {
@@ -38,8 +38,8 @@ mixin class FileOperationEvent {
     final List<Map<String, String>> movedFilesLog = [];
 
     try {
-      // Since vertexAIServiceProvider is now a FutureProvider, await its .future to safely get the service instance.
-      final aiService = await ref.read(vertexAIServiceProvider.future);
+      // Get the file organization service instance
+      final fileService = ref.read(fileOrganizationServiceProvider);
 
       // 3. File classification task
       final Map<String, String> fileToCategoryMap = {};
@@ -59,10 +59,8 @@ mixin class FileOperationEvent {
             developer.log('Failed to read file snippet for ${item.name}: $e');
           }
 
-          final category = await aiService.classifyFile(item.name, snippet);
-          if (category != null) {
-            fileToCategoryMap[item.path] = category;
-          }
+          final category = fileService.classifyFile(item.name, snippet);
+          fileToCategoryMap[item.path] = category;
         }
       }
 
@@ -83,7 +81,7 @@ mixin class FileOperationEvent {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text('AI 파일 정리 제안'),
+            title: const Text('파일 정리 제안'),
             content: SizedBox(
               // Use SizedBox to limit the maximum height of the dialog content
               width: double.maxFinite,

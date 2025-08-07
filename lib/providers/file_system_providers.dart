@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
-import 'package:macos_file_manager/services/vertex_ai_service.dart';
+import 'package:macos_file_manager/services/file_organization_service.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 
