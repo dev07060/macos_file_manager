@@ -23,13 +23,14 @@ class TreeViewState {
     DirectoryNodeData? rootNode,
     Offset? dragOffset,
     String? activeViewMorePath,
+    bool clearActiveViewMorePath = false,
   }) {
     return TreeViewState(
       isTreeViewActive: isTreeViewActive ?? this.isTreeViewActive,
       rootPath: rootPath ?? this.rootPath,
       rootNode: rootNode ?? this.rootNode,
       dragOffset: dragOffset ?? this.dragOffset,
-      activeViewMorePath: activeViewMorePath ?? this.activeViewMorePath,
+      activeViewMorePath: clearActiveViewMorePath ? null : (activeViewMorePath ?? this.activeViewMorePath),
     );
   }
 }

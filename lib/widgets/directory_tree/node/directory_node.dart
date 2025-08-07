@@ -26,6 +26,19 @@ class DirectoryNodeWidget extends HookConsumerWidget with DragDropItemsEvent, Ba
     this.searchQuery,
   });
 
+  /// View More 버튼의 색상을 반환하는 함수
+  /// isExpanded가 true이면 orange, false이면 blue
+  /// 테마에 따른 색상 블렌딩 적용
+  Color _getViewMoreButtonColor(bool isExpanded, bool isDarkMode) {
+    if (isExpanded) {
+      // view less 상태 - orange 색상
+      return isDarkMode ? Colors.orange[300]! : Colors.orange[700]!;
+    } else {
+      // view more 상태 - blue 색상
+      return isDarkMode ? Colors.blue[300]! : Colors.blue[700]!;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final List<GlobalKey> childKeys =
@@ -134,7 +147,7 @@ class DirectoryNodeWidget extends HookConsumerWidget with DragDropItemsEvent, Ba
                                     : '[view more] (${node.children.length - 10} more items)',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                                  color: _getViewMoreButtonColor(node.isViewMoreExpanded, isDarkMode),
                                   fontStyle: FontStyle.italic,
                                 ),
                               ),

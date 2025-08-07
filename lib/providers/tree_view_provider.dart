@@ -150,19 +150,20 @@ class TreeViewNotifier extends _$TreeViewNotifier {
   // View More 기능 토글
   void toggleViewMore(String path) {
     state.whenData((currentState) {
-      // 다른 모든 view more를 닫고 현재 것만 토글
-      _collapseAllViewMore(currentState.rootNode);
-
       final isCurrentlyExpanded = currentState.activeViewMorePath == path;
+
+      // 다른 모든 view more를 닫기
+      _collapseAllViewMore(currentState.rootNode);
 
       if (!isCurrentlyExpanded) {
         // 새로운 view more 열기
         _setViewMoreExpanded(currentState.rootNode, path, true);
-        state = AsyncValue.data(currentState.copyWith(activeViewMorePath: path));
+        final newState = currentState.copyWith(activeViewMorePath: path);
+        state = AsyncValue.data(newState);
       } else {
         // 현재 view more 닫기
-        _setViewMoreExpanded(currentState.rootNode, path, false);
-        state = AsyncValue.data(currentState.copyWith(activeViewMorePath: null));
+        final newState = currentState.copyWith(clearActiveViewMorePath: true);
+        state = AsyncValue.data(newState);
       }
     });
   }
