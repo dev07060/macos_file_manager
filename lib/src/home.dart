@@ -8,13 +8,16 @@ import 'package:macos_file_manager/providers/tree_view_provider.dart';
 import 'package:macos_file_manager/src/base_event.dart';
 import 'package:macos_file_manager/src/base_state.dart';
 import 'package:macos_file_manager/src/file_operation_event.dart';
+import 'package:macos_file_manager/src/file_organization_event.dart';
 import 'package:macos_file_manager/src/navigation_event.dart';
 import 'package:macos_file_manager/src/widgets/favorites_section.dart';
+import 'package:macos_file_manager/src/widgets/file_category_settings.dart';
 import 'package:macos_file_manager/src/widgets/file_details.dart';
 import 'package:macos_file_manager/src/widgets/file_item.dart';
 import 'package:macos_file_manager/src/widgets/toolbar.dart';
 
-class HomePage extends HookConsumerWidget with BaseState, BaseEvent, NavigationEvent, FileOperationEvent {
+class HomePage extends HookConsumerWidget
+    with BaseState, BaseEvent, NavigationEvent, FileOperationEvent, FileOrganizationEvent {
   const HomePage({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -102,6 +105,14 @@ class HomePage extends HookConsumerWidget with BaseState, BaseEvent, NavigationE
                               onPressed: () {
                                 // 아직 구현되지 않은 이벤트 핸들러 호출
                                 organizeDirectoryWithAI(ref, context);
+                              },
+                            ),
+
+                            IconButton(
+                              icon: const Icon(Icons.settings, size: 20),
+                              tooltip: 'File category settings',
+                              onPressed: () {
+                                showDialog(context: context, builder: (context) => const FileCategorySettingsDialog());
                               },
                             ),
                           ],

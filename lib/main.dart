@@ -5,7 +5,8 @@ import 'package:macos_file_manager/providers/theme_provider.dart';
 import 'package:macos_file_manager/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'providers/favorites_provider.dart';
+import 'providers/favorites_provider.dart' as favorites_provider;
+import 'providers/file_category_config_provider.dart' as file_category_provider;
 import 'src/home.dart';
 
 Future main() async {
@@ -14,7 +15,13 @@ Future main() async {
   await dotenv.load(fileName: "assets/env/.dev.env");
 
   runApp(
-    ProviderScope(overrides: [sharedPreferencesProvider.overrideWithValue(sharedPreferences)], child: const MyApp()),
+    ProviderScope(
+      overrides: [
+        favorites_provider.sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+        file_category_provider.sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+      ],
+      child: const MyApp(),
+    ),
   );
 }
 

@@ -1,4 +1,6 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/model/file_category_config.dart';
+import 'package:macos_file_manager/providers/file_category_config_provider.dart';
 import 'package:path/path.dart' as path;
 
 // 정리 방식 열거형
@@ -27,6 +29,10 @@ class OrganizationMethodInfo {
 }
 
 class FileOrganizationService {
+  final Ref _ref;
+
+  FileOrganizationService(this._ref);
+
   // 정리 방식 목록
   static const List<OrganizationMethodInfo> organizationMethods = [
     OrganizationMethodInfo(
@@ -67,117 +73,8 @@ class FileOrganizationService {
     ),
   ];
 
-  // 파일 확장자별 카테고리 매핑
-  static const Map<String, String> _extensionCategories = {
-    // 문서
-    'pdf': '문서',
-    'doc': '문서',
-    'docx': '문서',
-    'txt': '문서',
-    'rtf': '문서',
-    'odt': '문서',
-    'pages': '문서',
-
-    // 스프레드시트
-    'xls': '문서',
-    'xlsx': '문서',
-    'csv': '문서',
-    'numbers': '문서',
-
-    // 프레젠테이션
-    'ppt': '프레젠테이션',
-    'pptx': '프레젠테이션',
-    'key': '프레젠테이션',
-
-    // 이미지
-    'jpg': '이미지',
-    'jpeg': '이미지',
-    'png': '이미지',
-    'gif': '이미지',
-    'bmp': '이미지',
-    'tiff': '이미지',
-    'svg': '이미지',
-    'webp': '이미지',
-    'heic': '이미지',
-
-    // 동영상
-    'mp4': '동영상',
-    'avi': '동영상',
-    'mov': '동영상',
-    'wmv': '동영상',
-    'flv': '동영상',
-    'mkv': '동영상',
-    'webm': '동영상',
-    'm4v': '동영상',
-
-    // 음악
-    'mp3': '음악',
-    'wav': '음악',
-    'flac': '음악',
-    'aac': '음악',
-    'm4a': '음악',
-    'ogg': '음악',
-    'wma': '음악',
-
-    // 소스코드
-    'dart': '소스코드',
-    'js': '소스코드',
-    'ts': '소스코드',
-    'py': '소스코드',
-    'java': '소스코드',
-    'cpp': '소스코드',
-    'c': '소스코드',
-    'h': '소스코드',
-    'swift': '소스코드',
-    'kt': '소스코드',
-    'go': '소스코드',
-    'rs': '소스코드',
-    'php': '소스코드',
-    'rb': '소스코드',
-    'html': '소스코드',
-    'css': '소스코드',
-    'scss': '소스코드',
-    'json': '소스코드',
-    'xml': '소스코드',
-    'yaml': '소스코드',
-    'yml': '소스코드',
-
-    // 압축파일
-    'zip': '압축파일',
-    'rar': '압축파일',
-    '7z': '압축파일',
-    'tar': '압축파일',
-    'gz': '압축파일',
-    'bz2': '압축파일',
-
-    // 실행파일
-    'exe': '실행파일',
-    'app': '실행파일',
-    'dmg': '실행파일',
-    'pkg': '실행파일',
-    'deb': '실행파일',
-    'rpm': '실행파일',
-  };
-
-  // 파일명 패턴별 카테고리 매핑
-  static const Map<String, String> _filenamePatterns = {
-    'invoice': '청구서',
-    'bill': '청구서',
-    '청구서': '청구서',
-    '계산서': '청구서',
-
-    'contract': '계약서',
-    '계약서': '계약서',
-    '약정서': '계약서',
-
-    'report': '보고서',
-    '보고서': '보고서',
-    '리포트': '보고서',
-
-    'presentation': '프레젠테이션',
-    '발표': '프레젠테이션',
-    '프레젠테이션': '프레젠테이션',
-  };
+  /// 현재 설정된 카테고리 구성을 가져옵니다
+  FileCategoryConfig get _config => _ref.read(fileCategoryConfigProvider);
 
   // 기존 메서드 - 카테고리별 분류
   String classifyFile(String fileName, String contentSnippet) {
@@ -210,20 +107,12 @@ class FileOrganizationService {
 
   // 카테고리별 분류 로직
   String _categorizeByContent(String fileName, String contentSnippet) {
-    final lowerFileName = fileName.toLowerCase();
     final lowerContent = contentSnippet.toLowerCase();
-
-    // 파일명 패턴 검사
-    for (final entry in _filenamePatterns.entries) {
-      if (lowerFileName.contains(entry.key) || lowerContent.contains(entry.key)) {
-        return entry.value;
-      }
-    }
 
     // 확장자 기반 분류
     final extension = path.extension(fileName).toLowerCase().replaceFirst('.', '');
-    if (_extensionCategories.containsKey(extension)) {
-      return _extensionCategories[extension]!;
+    if (_config.extensionCategories.containsKey(extension)) {
+      return _config.extensionCategories[extension]!;
     }
 
     // 내용 기반 추가 분류
@@ -265,8 +154,8 @@ class FileOrganizationService {
   String _categorizeByFileType(String fileName) {
     final extension = path.extension(fileName).toLowerCase().replaceFirst('.', '');
 
-    if (_extensionCategories.containsKey(extension)) {
-      return _extensionCategories[extension]!;
+    if (_config.extensionCategories.containsKey(extension)) {
+      return _config.extensionCategories[extension]!;
     }
 
     // 확장자가 없는 경우 파일명으로 추정
@@ -393,5 +282,5 @@ class FileOrganizationService {
 }
 
 final fileOrganizationServiceProvider = Provider<FileOrganizationService>((ref) {
-  return FileOrganizationService();
+  return FileOrganizationService(ref);
 });

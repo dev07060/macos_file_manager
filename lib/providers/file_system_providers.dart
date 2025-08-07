@@ -97,7 +97,6 @@ class DirectoryHistoryNotifier extends StateNotifier<DirectoryHistory> {
   }
 }
 
-// 파일 정리 설정 provider 추가
 final fileOrganizationSettingsProvider =
     StateNotifierProvider<FileOrganizationSettingsNotifier, FileOrganizationSettings>((ref) {
       return FileOrganizationSettingsNotifier();
