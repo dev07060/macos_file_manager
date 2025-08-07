@@ -10,6 +10,8 @@
 .history
 .svn/
 .swiftpm/
+.kiro/
+.serena/
 migrate_working_dir/
 
 # IntelliJ related
