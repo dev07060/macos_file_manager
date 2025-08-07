@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_category_config.dart';
 import 'package:macos_file_manager/providers/file_category_config_provider.dart';
@@ -72,7 +73,7 @@ class FileCategorySettingsDialog extends ConsumerWidget {
   }
 
   void _importConfig(BuildContext context, WidgetRef ref) {
-    showDialog(context: context, builder: (context) => _ImportConfigDialog(ref: ref));
+    showDialog(context: context, builder: (context) => const _ImportConfigDialog());
   }
 }
 
@@ -238,39 +239,34 @@ class _ExtensionMappingTab extends ConsumerWidget {
 }
 
 // 다이얼로그 위젯들
-class _AddExtensionDialog extends StatefulWidget {
+class _AddExtensionDialog extends HookConsumerWidget {
   final List<String> categories;
 
   const _AddExtensionDialog({required this.categories});
 
   @override
-  State<_AddExtensionDialog> createState() => _AddExtensionDialogState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final extensionController = useTextEditingController();
+    final selectedCategory = useState<String?>(null);
 
-class _AddExtensionDialogState extends State<_AddExtensionDialog> {
-  final _extensionController = TextEditingController();
-  String? _selectedCategory;
-
-  @override
-  Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('확장자 추가'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
-            controller: _extensionController,
+            controller: extensionController,
             decoration: const InputDecoration(labelText: '확장자', hintText: 'pdf, jpg, txt 등 (점 제외)'),
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _selectedCategory,
+            value: selectedCategory.value,
             decoration: const InputDecoration(labelText: '카테고리'),
             items:
-                widget.categories.map((category) {
+                categories.map((category) {
                   return DropdownMenuItem(value: category, child: Text(category));
                 }).toList(),
-            onChanged: (value) => setState(() => _selectedCategory = value),
+            onChanged: (value) => selectedCategory.value = value,
           ),
         ],
       ),
@@ -278,9 +274,10 @@ class _AddExtensionDialogState extends State<_AddExtensionDialog> {
         TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('취소')),
         TextButton(
           onPressed:
-              _selectedCategory != null && _extensionController.text.isNotEmpty
-                  ? () =>
-                      Navigator.of(context).pop({'extension': _extensionController.text, 'category': _selectedCategory})
+              selectedCategory.value != null && extensionController.text.isNotEmpty
+                  ? () => Navigator.of(
+                    context,
+                  ).pop({'extension': extensionController.text, 'category': selectedCategory.value})
                   : null,
           child: const Text('추가'),
         ),
@@ -289,67 +286,49 @@ class _AddExtensionDialogState extends State<_AddExtensionDialog> {
   }
 }
 
-class _EditExtensionDialog extends StatefulWidget {
+class _EditExtensionDialog extends HookConsumerWidget {
   final ExtensionMapping mapping;
   final List<String> categories;
 
   const _EditExtensionDialog({required this.mapping, required this.categories});
 
   @override
-  State<_EditExtensionDialog> createState() => _EditExtensionDialogState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedCategory = useState<String?>(mapping.category);
 
-class _EditExtensionDialogState extends State<_EditExtensionDialog> {
-  String? _selectedCategory;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedCategory = widget.mapping.category;
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('확장자 수정: .${widget.mapping.extension}'),
+      title: Text('확장자 수정: .${mapping.extension}'),
       content: DropdownButtonFormField<String>(
-        value: _selectedCategory,
+        value: selectedCategory.value,
         decoration: const InputDecoration(labelText: '카테고리'),
         items:
-            widget.categories.map((category) {
+            categories.map((category) {
               return DropdownMenuItem(value: category, child: Text(category));
             }).toList(),
-        onChanged: (value) => setState(() => _selectedCategory = value),
+        onChanged: (value) => selectedCategory.value = value,
       ),
       actions: [
         TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('취소')),
-        TextButton(onPressed: () => Navigator.of(context).pop(_selectedCategory), child: const Text('수정')),
+        TextButton(onPressed: () => Navigator.of(context).pop(selectedCategory.value), child: const Text('수정')),
       ],
     );
   }
 }
 
-class _ImportConfigDialog extends StatefulWidget {
-  final WidgetRef ref;
-
-  const _ImportConfigDialog({required this.ref});
+class _ImportConfigDialog extends HookConsumerWidget {
+  const _ImportConfigDialog();
 
   @override
-  State<_ImportConfigDialog> createState() => _ImportConfigDialogState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final configController = useTextEditingController();
 
-class _ImportConfigDialogState extends State<_ImportConfigDialog> {
-  final _configController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('설정 가져오기'),
       content: SizedBox(
         width: 400,
         height: 200,
         child: TextField(
-          controller: _configController,
+          controller: configController,
           maxLines: null,
           expands: true,
           decoration: const InputDecoration(
@@ -363,9 +342,7 @@ class _ImportConfigDialogState extends State<_ImportConfigDialog> {
         TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('취소')),
         TextButton(
           onPressed: () async {
-            final success = await widget.ref
-                .read(fileCategoryConfigProvider.notifier)
-                .importConfig(_configController.text);
+            final success = await ref.read(fileCategoryConfigProvider.notifier).importConfig(configController.text);
 
             Navigator.of(context).pop();
 
