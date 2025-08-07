@@ -54,78 +54,87 @@ class HomePage extends HookConsumerWidget
                           color: Theme.of(context).appBarTheme.backgroundColor,
                           border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
                         ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 12,
-                              child: Padding(
-                                padding: const EdgeInsets.all(10.0),
-                                child: Text(
-                                  result,
-                                  maxLines: 1,
-                                  style: TextStyle(fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
+                                  child: Text(
+                                    result,
+                                    maxLines: 1,
+                                    style: TextStyle(fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const Spacer(),
-                            // Show action icons only when items are selected
-                            if (selectedCount > 0) ...[
-                              // Delete button
-                              Expanded(
-                                flex: 3,
-                                child: IconButton(
-                                  icon: const Icon(Icons.delete_outline, size: 20),
-                                  tooltip: 'Delete selected items',
-                                  onPressed: () => deleteSelectedItems(ref, context),
-                                ),
-                              ),
-                              // Compress button
-                              Expanded(
-                                flex: 3,
-                                child: IconButton(
-                                  icon: const Icon(Icons.archive_outlined, size: 20),
-                                  tooltip: 'Compress selected items',
-                                  onPressed: () => compressSelectedItems(ref, context),
-                                ),
+                              // Action icons section with consistent spacing
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Show action icons only when items are selected
+                                  if (selectedCount > 0) ...[
+                                    // Delete button
+                                    SizedBox(
+                                      width: 40,
+                                      child: IconButton(
+                                        icon: const Icon(Icons.delete_outline, size: 20),
+                                        tooltip: 'Delete selected items',
+                                        onPressed: () => deleteSelectedItems(ref, context),
+                                      ),
+                                    ),
+                                    // Compress button
+                                    SizedBox(
+                                      width: 40,
+                                      child: IconButton(
+                                        icon: const Icon(Icons.archive_outlined, size: 20),
+                                        tooltip: 'Compress selected items',
+                                        onPressed: () => compressSelectedItems(ref, context),
+                                      ),
+                                    ),
+                                  ],
+                                  // Tree-view button - hide when multiple items selected
+                                  if (selectedCount <= 1)
+                                    SizedBox(
+                                      width: 40,
+                                      child: IconButton(
+                                        icon: const Icon(Icons.account_tree, size: 20),
+                                        tooltip: 'Show tree-view from dir',
+                                        onPressed: () {
+                                          ref.read(searchQueryProvider.notifier).state = null;
+                                          ref.read(treeViewNotifierProvider.notifier).showTreeView(path);
+                                        },
+                                      ),
+                                    ),
+                                  // AI organize button
+                                  SizedBox(
+                                    width: 40,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.auto_awesome, size: 20),
+                                      tooltip: 'Organize files with AI',
+                                      onPressed: () {
+                                        organizeDirectoryWithAI(ref, context);
+                                      },
+                                    ),
+                                  ),
+                                  // Settings button
+                                  SizedBox(
+                                    width: 40,
+                                    child: IconButton(
+                                      icon: const Icon(Icons.settings, size: 20),
+                                      tooltip: 'File category settings',
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => const FileCategorySettingsDialog(),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
-
-                            IconButton(
-                              icon: Icon(
-                                Icons.account_tree,
-                                size: 20,
-                                color: selectedCount > 1 ? Theme.of(context).disabledColor : null,
-                              ),
-                              tooltip:
-                                  selectedCount > 1
-                                      ? 'Tree-view disabled (multiple items selected)'
-                                      : 'Show tree-view from dir',
-                              onPressed:
-                                  selectedCount > 1
-                                      ? null
-                                      : () {
-                                        ref.read(searchQueryProvider.notifier).state = null;
-                                        ref.read(treeViewNotifierProvider.notifier).showTreeView(path);
-                                      },
-                            ),
-
-                            IconButton(
-                              icon: const Icon(Icons.auto_awesome, size: 20),
-                              tooltip: 'Organize files with AI',
-                              onPressed: () {
-                                // 아직 구현되지 않은 이벤트 핸들러 호출
-                                organizeDirectoryWithAI(ref, context);
-                              },
-                            ),
-
-                            IconButton(
-                              icon: const Icon(Icons.settings, size: 20),
-                              tooltip: 'File category settings',
-                              onPressed: () {
-                                showDialog(context: context, builder: (context) => const FileCategorySettingsDialog());
-                              },
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                       Expanded(

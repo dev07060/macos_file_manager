@@ -9,6 +9,7 @@ class DirectoryNodeData {
   final List<DirectoryNodeData> children;
   bool isExpanded;
   bool isSelected;
+  bool isViewMoreExpanded;
 
   DirectoryNodeData({
     required this.name,
@@ -16,7 +17,26 @@ class DirectoryNodeData {
     List<DirectoryNodeData>? children,
     this.isExpanded = false,
     this.isSelected = false,
+    this.isViewMoreExpanded = false,
   }) : children = children ?? [];
+
+  // 표시할 자식 노드들을 반환 (view more 상태에 따라)
+  List<DirectoryNodeData> get visibleChildren {
+    if (children.length <= 10) {
+      return children;
+    }
+
+    if (isViewMoreExpanded) {
+      return children;
+    } else {
+      return children.take(10).toList();
+    }
+  }
+
+  // view more 버튼을 표시해야 하는지 확인
+  bool get shouldShowViewMore {
+    return children.length > 10;
+  }
 
   static Future<DirectoryNodeData> fromDirectory(
     String dirPath, {

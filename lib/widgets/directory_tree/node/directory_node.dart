@@ -28,7 +28,8 @@ class DirectoryNodeWidget extends HookConsumerWidget with DragDropItemsEvent, Ba
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final List<GlobalKey> childKeys = node.isExpanded ? List.generate(node.children.length, (_) => GlobalKey()) : [];
+    final List<GlobalKey> childKeys =
+        node.isExpanded ? List.generate(node.visibleChildren.length, (_) => GlobalKey()) : [];
     ref.watch(treeViewUpdateProvider);
     final size = MediaQuery.of(context).size;
     final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
@@ -72,7 +73,7 @@ class DirectoryNodeWidget extends HookConsumerWidget with DragDropItemsEvent, Ba
         ),
 
         // Child nodes and connection lines
-        if (node.isExpanded && node.children.isNotEmpty)
+        if (node.isExpanded && node.visibleChildren.isNotEmpty)
           Stack(
             children: [
               // Connection lines (placed at the bottom layer)
@@ -93,12 +94,13 @@ class DirectoryNodeWidget extends HookConsumerWidget with DragDropItemsEvent, Ba
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ...node.children.asMap().entries.map((entry) {
+                    // Visible children
+                    ...node.visibleChildren.asMap().entries.map((entry) {
                       int index = entry.key;
                       DirectoryNodeData child = entry.value;
 
                       return Padding(
-                        key: childKeys[index],
+                        key: childKeys.length > index ? childKeys[index] : GlobalKey(),
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: DirectoryNodeWidget(
                           node: child,
@@ -108,6 +110,38 @@ class DirectoryNodeWidget extends HookConsumerWidget with DragDropItemsEvent, Ba
                         ),
                       );
                     }),
+
+                    // View More button - positioned at a fixed indentation level
+                    if (node.shouldShowViewMore)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            // Fixed indentation instead of following the tree depth
+                            const SizedBox(width: 20), // Fixed 20px indentation
+                            TextButton(
+                              onPressed: () {
+                                ref.read(treeViewNotifierProvider.notifier).toggleViewMore(node.path);
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                node.isViewMoreExpanded
+                                    ? '[view less] (${node.children.length - 10} items hidden)'
+                                    : '[view more] (${node.children.length - 10} more items)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
