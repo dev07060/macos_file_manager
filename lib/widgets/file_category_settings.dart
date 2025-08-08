@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/model/file_category_config.dart';
 import 'package:macos_file_manager/providers/file_category_config_provider.dart';
+import 'package:macos_file_manager/widgets/dialogs/add_extension_dialog.dart';
+import 'package:macos_file_manager/widgets/dialogs/edit_extension_dialog.dart';
+import 'package:macos_file_manager/widgets/dialogs/import_config_dialog.dart';
 
 class FileCategorySettingsDialog extends ConsumerWidget {
   const FileCategorySettingsDialog({super.key});
@@ -18,23 +22,23 @@ class FileCategorySettingsDialog extends ConsumerWidget {
           children: [
             Row(
               children: [
-                const Text('파일 확장자 설정', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text(AppStrings.fileCategorySettings, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const Spacer(),
                 IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close)),
               ],
             ),
             const SizedBox(height: 16),
-            Expanded(child: _ExtensionMappingTab()),
+            const Expanded(child: _ExtensionMappingTab()),
             const SizedBox(height: 16),
             Row(
               children: [
-                TextButton(onPressed: () => _showResetDialog(context, ref), child: const Text('기본값으로 리셋')),
+                TextButton(onPressed: () => _showResetDialog(context, ref), child: const Text(AppStrings.reset)),
                 const SizedBox(width: 8),
-                TextButton(onPressed: () => _exportConfig(context, ref), child: const Text('설정 내보내기')),
+                TextButton(onPressed: () => _exportConfig(context, ref), child: const Text(AppStrings.exportSettings)),
                 const SizedBox(width: 8),
-                TextButton(onPressed: () => _importConfig(context, ref), child: const Text('설정 가져오기')),
+                TextButton(onPressed: () => _importConfig(context, ref), child: const Text(AppStrings.importSettings)),
                 const Spacer(),
-                ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: const Text('완료')),
+                ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: const Text(AppStrings.complete)),
               ],
             ),
           ],
@@ -48,17 +52,17 @@ class FileCategorySettingsDialog extends ConsumerWidget {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('설정 리셋'),
-            content: const Text('모든 설정을 기본값으로 되돌리시겠습니까?'),
+            title: const Text(AppStrings.resetSettingsTitle),
+            content: const Text(AppStrings.resetSettingsMessage),
             actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('취소')),
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text(AppStrings.cancel)),
               TextButton(
                 onPressed: () {
                   ref.read(fileCategoryConfigProvider.notifier).resetToDefault();
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('설정이 기본값으로 리셋되었습니다.')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(AppStrings.settingsResetMessage)));
                 },
-                child: const Text('리셋'),
+                child: const Text(AppStrings.reset),
               ),
             ],
           ),
@@ -68,15 +72,17 @@ class FileCategorySettingsDialog extends ConsumerWidget {
   void _exportConfig(BuildContext context, WidgetRef ref) {
     final config = ref.read(fileCategoryConfigProvider.notifier).exportConfig();
     Clipboard.setData(ClipboardData(text: config));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('설정이 클립보드에 복사되었습니다.')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(AppStrings.settingsExportedMessage)));
   }
 
   void _importConfig(BuildContext context, WidgetRef ref) {
-    showDialog(context: context, builder: (context) => _ImportConfigDialog(ref: ref));
+    showDialog(context: context, builder: (context) => const ImportConfigDialog());
   }
 }
 
 class _ExtensionMappingTab extends ConsumerWidget {
+  const _ExtensionMappingTab();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mappings = ref.watch(extensionMappingsProvider);
@@ -101,7 +107,7 @@ class _ExtensionMappingTab extends ConsumerWidget {
               ElevatedButton.icon(
                 onPressed: () => _showAddExtensionDialog(context, ref, categories),
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('확장자 추가'),
+                label: const Text(AppStrings.addExtensionTitle),
                 style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
               ),
             ],
@@ -115,13 +121,13 @@ class _ExtensionMappingTab extends ConsumerWidget {
             color: Theme.of(context).colorScheme.surface,
             border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
           ),
-          child: Row(
+          child: const Row(
             children: [
-              const SizedBox(width: 100, child: Text('확장자', style: TextStyle(fontWeight: FontWeight.bold))),
-              const SizedBox(width: 150, child: Text('카테고리', style: TextStyle(fontWeight: FontWeight.bold))),
-              const SizedBox(width: 80, child: Text('타입', style: TextStyle(fontWeight: FontWeight.bold))),
-              const Spacer(),
-              const SizedBox(width: 100, child: Text('작업', style: TextStyle(fontWeight: FontWeight.bold))),
+              SizedBox(width: 100, child: Text(AppStrings.extensionLabel, style: TextStyle(fontWeight: FontWeight.bold))),
+              SizedBox(width: 150, child: Text(AppStrings.categoryLabel, style: TextStyle(fontWeight: FontWeight.bold))),
+              SizedBox(width: 80, child: Text('타입', style: TextStyle(fontWeight: FontWeight.bold))),
+              Spacer(),
+              SizedBox(width: 100, child: Text('작업', style: TextStyle(fontWeight: FontWeight.bold))),
             ],
           ),
         ),
@@ -185,14 +191,14 @@ class _ExtensionMappingTab extends ConsumerWidget {
                           IconButton(
                             onPressed: () => _showEditExtensionDialog(context, ref, mapping, categories),
                             icon: const Icon(Icons.edit, size: 18),
-                            tooltip: '수정',
+                            tooltip: AppStrings.edit,
                             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                           ),
                           if (mapping.isCustom)
                             IconButton(
                               onPressed: () => _removeExtension(ref, mapping.extension),
                               icon: const Icon(Icons.delete, size: 18, color: Colors.red),
-                              tooltip: '삭제',
+                              tooltip: AppStrings.delete,
                               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                             ),
                         ],
@@ -209,7 +215,7 @@ class _ExtensionMappingTab extends ConsumerWidget {
   }
 
   void _showAddExtensionDialog(BuildContext context, WidgetRef ref, List<String> categories) {
-    showDialog(context: context, builder: (context) => _AddExtensionDialog(categories: categories)).then((result) {
+    showDialog(context: context, builder: (context) => AddExtensionDialog(categories: categories)).then((result) {
       if (result != null) {
         ref.read(fileCategoryConfigProvider.notifier).addExtensionMapping(result['extension'], result['category']);
       }
@@ -224,7 +230,7 @@ class _ExtensionMappingTab extends ConsumerWidget {
   ) {
     showDialog(
       context: context,
-      builder: (context) => _EditExtensionDialog(mapping: mapping, categories: categories),
+      builder: (context) => EditExtensionDialog(mapping: mapping, categories: categories),
     ).then((result) {
       if (result != null) {
         ref.read(fileCategoryConfigProvider.notifier).updateExtensionMapping(mapping.extension, result);
@@ -234,150 +240,5 @@ class _ExtensionMappingTab extends ConsumerWidget {
 
   void _removeExtension(WidgetRef ref, String extension) {
     ref.read(fileCategoryConfigProvider.notifier).removeExtensionMapping(extension);
-  }
-}
-
-// 다이얼로그 위젯들
-class _AddExtensionDialog extends StatefulWidget {
-  final List<String> categories;
-
-  const _AddExtensionDialog({required this.categories});
-
-  @override
-  State<_AddExtensionDialog> createState() => _AddExtensionDialogState();
-}
-
-class _AddExtensionDialogState extends State<_AddExtensionDialog> {
-  final _extensionController = TextEditingController();
-  String? _selectedCategory;
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('확장자 추가'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _extensionController,
-            decoration: const InputDecoration(labelText: '확장자', hintText: 'pdf, jpg, txt 등 (점 제외)'),
-          ),
-          const SizedBox(height: 16),
-          DropdownButtonFormField<String>(
-            value: _selectedCategory,
-            decoration: const InputDecoration(labelText: '카테고리'),
-            items:
-                widget.categories.map((category) {
-                  return DropdownMenuItem(value: category, child: Text(category));
-                }).toList(),
-            onChanged: (value) => setState(() => _selectedCategory = value),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('취소')),
-        TextButton(
-          onPressed:
-              _selectedCategory != null && _extensionController.text.isNotEmpty
-                  ? () =>
-                      Navigator.of(context).pop({'extension': _extensionController.text, 'category': _selectedCategory})
-                  : null,
-          child: const Text('추가'),
-        ),
-      ],
-    );
-  }
-}
-
-class _EditExtensionDialog extends StatefulWidget {
-  final ExtensionMapping mapping;
-  final List<String> categories;
-
-  const _EditExtensionDialog({required this.mapping, required this.categories});
-
-  @override
-  State<_EditExtensionDialog> createState() => _EditExtensionDialogState();
-}
-
-class _EditExtensionDialogState extends State<_EditExtensionDialog> {
-  String? _selectedCategory;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedCategory = widget.mapping.category;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('확장자 수정: .${widget.mapping.extension}'),
-      content: DropdownButtonFormField<String>(
-        value: _selectedCategory,
-        decoration: const InputDecoration(labelText: '카테고리'),
-        items:
-            widget.categories.map((category) {
-              return DropdownMenuItem(value: category, child: Text(category));
-            }).toList(),
-        onChanged: (value) => setState(() => _selectedCategory = value),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('취소')),
-        TextButton(onPressed: () => Navigator.of(context).pop(_selectedCategory), child: const Text('수정')),
-      ],
-    );
-  }
-}
-
-class _ImportConfigDialog extends StatefulWidget {
-  final WidgetRef ref;
-
-  const _ImportConfigDialog({required this.ref});
-
-  @override
-  State<_ImportConfigDialog> createState() => _ImportConfigDialogState();
-}
-
-class _ImportConfigDialogState extends State<_ImportConfigDialog> {
-  final _configController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('설정 가져오기'),
-      content: SizedBox(
-        width: 400,
-        height: 200,
-        child: TextField(
-          controller: _configController,
-          maxLines: null,
-          expands: true,
-          decoration: const InputDecoration(
-            labelText: '설정 JSON',
-            hintText: '내보낸 설정 JSON을 붙여넣으세요',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('취소')),
-        TextButton(
-          onPressed: () async {
-            final success = await widget.ref
-                .read(fileCategoryConfigProvider.notifier)
-                .importConfig(_configController.text);
-
-            Navigator.of(context).pop();
-
-            if (success) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('설정을 성공적으로 가져왔습니다.')));
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('설정 가져오기에 실패했습니다.')));
-            }
-          },
-          child: const Text('가져오기'),
-        ),
-      ],
-    );
   }
 }

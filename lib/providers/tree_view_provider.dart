@@ -16,14 +16,16 @@ class TreeViewNotifier extends _$TreeViewNotifier {
 
   @override
   Future<TreeViewState> build() async {
-    return TreeViewState(isTreeViewActive: false, rootPath: null, rootNode: null);
+    return TreeViewState(isTreeViewActive: false, rootPath: null, rootNode: null, activeViewMorePath: null);
   }
 
   Future<void> showTreeView(String rootPath) async {
     state = const AsyncValue.loading();
     try {
       final rootNode = await _directoryService.loadDirectoryStructure(rootPath);
-      state = AsyncValue.data(TreeViewState(isTreeViewActive: true, rootPath: rootPath, rootNode: rootNode));
+      state = AsyncValue.data(
+        TreeViewState(isTreeViewActive: true, rootPath: rootPath, rootNode: rootNode, activeViewMorePath: null),
+      );
     } catch (e, st) {
       state = AsyncValue.error(e is Exception ? e : Exception('Too many nodes to load tree-view'), st);
     }
@@ -48,6 +50,7 @@ class TreeViewNotifier extends _$TreeViewNotifier {
       path: node.path,
       isSelected: isSelected,
       isExpanded: isSelected || node.isExpanded,
+      isViewMoreExpanded: node.isViewMoreExpanded,
       children: node.children.map((child) => _updateSelection(child, selectedPath)).toList(),
     );
   }
@@ -66,7 +69,9 @@ class TreeViewNotifier extends _$TreeViewNotifier {
   }
 
   void hideTreeView() {
-    state = const AsyncValue.data(TreeViewState(isTreeViewActive: false, rootPath: null, rootNode: null));
+    state = const AsyncValue.data(
+      TreeViewState(isTreeViewActive: false, rootPath: null, rootNode: null, activeViewMorePath: null),
+    );
   }
 
   void toggleNode(String path) {
@@ -139,6 +144,50 @@ class TreeViewNotifier extends _$TreeViewNotifier {
     node.isExpanded = false;
     for (final child in node.children) {
       _collapseAllRecursive(child);
+    }
+  }
+
+  // View More 기능 토글
+  void toggleViewMore(String path) {
+    state.whenData((currentState) {
+      final isCurrentlyExpanded = currentState.activeViewMorePath == path;
+
+      // 다른 모든 view more를 닫기
+      _collapseAllViewMore(currentState.rootNode);
+
+      if (!isCurrentlyExpanded) {
+        // 새로운 view more 열기
+        _setViewMoreExpanded(currentState.rootNode, path, true);
+        final newState = currentState.copyWith(activeViewMorePath: path);
+        state = AsyncValue.data(newState);
+      } else {
+        // 현재 view more 닫기
+        final newState = currentState.copyWith(clearActiveViewMorePath: true);
+        state = AsyncValue.data(newState);
+      }
+    });
+  }
+
+  // 모든 view more를 닫기
+  void _collapseAllViewMore(DirectoryNodeData? node) {
+    if (node == null) return;
+    node.isViewMoreExpanded = false;
+    for (final child in node.children) {
+      _collapseAllViewMore(child);
+    }
+  }
+
+  // 특정 경로의 view more 상태 설정
+  void _setViewMoreExpanded(DirectoryNodeData? node, String path, bool expanded) {
+    if (node == null) return;
+
+    if (node.path == path) {
+      node.isViewMoreExpanded = expanded;
+      return;
+    }
+
+    for (final child in node.children) {
+      _setViewMoreExpanded(child, path, expanded);
     }
   }
 }

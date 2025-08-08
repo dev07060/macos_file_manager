@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/model/directory_node_data.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/theme_provider.dart';
@@ -69,7 +70,7 @@ class DirectoryTreeView extends HookConsumerWidget {
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         onPressed: () {
           scale.value = isTreeExpanded.value ? 1.0 : 0.5;
-          isTreeExpanded.value = isTreeExpanded.value ? false : true;
+          isTreeExpanded.value = !isTreeExpanded.value;
           transformationController.value = Matrix4.identity()..scale(scale.value);
           isTreeExpanded.value ? treeViewProvider.expandAll() : treeViewProvider.collapseAll();
         },
@@ -91,7 +92,7 @@ class DirectoryTreeView extends HookConsumerWidget {
                   Expanded(
                     child: FSearchBar(
                       variant: FSearchBarVariant.normal,
-                      hintText: 'You can search directory name here within the tree by press "enter"',
+                      hintText: AppStrings.searchHint,
                       controller: searchController,
                       onChanged: (value) {
                         // Do nothing or implement live preview if needed
@@ -137,7 +138,7 @@ class DirectoryTreeView extends HookConsumerWidget {
                       filteredPaths.isEmpty
                           ? Center(
                             child: Text(
-                              'No results found',
+                              AppStrings.noResultsFound,
                               style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                             ),
                           )
@@ -205,7 +206,7 @@ class DirectoryTreeView extends HookConsumerWidget {
                     if (state.rootNode == null) {
                       return Center(
                         child: Text(
-                          'No directory structure',
+                          AppStrings.noDirectoryStructure,
                           style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                         ),
                       );
@@ -228,16 +229,16 @@ class DirectoryTreeView extends HookConsumerWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.error, color: Colors.red, size: 48),
+                            const Icon(Icons.error, color: Colors.red, size: 48),
                             const SizedBox(height: 16),
                             Text(
-                              'Error loading tree: $error',
+                              '${AppStrings.errorLoadingTree} $error',
                               style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton(
                               onPressed: () => ref.refresh(treeViewNotifierProvider),
-                              child: const Text('Retry'),
+                              child: const Text(AppStrings.retry),
                             ),
                           ],
                         ),

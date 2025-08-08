@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/services/file_system_service.dart';
+import 'package:macos_file_manager/utils/archive_utils.dart';
 import 'package:path/path.dart' as path;
 
 mixin class FileOperationEvent {
@@ -17,13 +19,13 @@ mixin class FileOperationEvent {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirm Delete'),
-          content: Text('Are you sure you want to delete $selectedCount selected files?'),
+          title: const Text(AppStrings.deleteConfirmTitle),
+          content: Text(AppStrings.deleteConfirmContent(selectedCount)),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text(AppStrings.cancel)),
             TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              child: const Text(AppStrings.delete, style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -55,19 +57,19 @@ mixin class FileOperationEvent {
         final controller = TextEditingController(text: '$archiveName.zip');
 
         return AlertDialog(
-          title: const Text('Create Archive'),
+          title: const Text(AppStrings.createArchiveTitle),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(hintText: 'archive.zip', labelText: 'Archive File Name'),
+            decoration: const InputDecoration(hintText: 'archive.zip', labelText: AppStrings.archiveFileNameLabel),
             autofocus: true,
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.of(context).pop(null), child: const Text(AppStrings.cancel)),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop({'fileName': controller.text});
               },
-              child: const Text('Compress'),
+              child: const Text(AppStrings.compress),
             ),
           ],
         );
@@ -76,7 +78,8 @@ mixin class FileOperationEvent {
 
     if (result == null) return; // User canceled
 
-    final zipFileName = result['fileName'];
+    final inputName = (result['fileName'] as String).trim();
+    final zipFileName = inputName.toLowerCase().endsWith('.zip') ? inputName : '$inputName.zip';
     final zipFilePath = path.join(currentDir, zipFileName);
 
     if (File(zipFilePath).existsSync()) {
@@ -84,11 +87,11 @@ mixin class FileOperationEvent {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('File Already Exists'),
-            content: Text('The file $zipFileName already exists. Do you want to overwrite it?'),
+            title: const Text(AppStrings.fileAlreadyExistsTitle),
+            content: Text(AppStrings.fileAlreadyExistsContent(zipFileName)),
             actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-              TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Overwrite')),
+              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text(AppStrings.cancel)),
+              TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text(AppStrings.overwrite)),
             ],
           );
         },
@@ -106,7 +109,7 @@ mixin class FileOperationEvent {
             children: [
               const CircularProgressIndicator.adaptive(),
               const SizedBox(width: 20),
-              const Text('Compressing...'),
+              const Text(AppStrings.compressing),
             ],
           ),
         );
@@ -129,7 +132,7 @@ mixin class FileOperationEvent {
           archive.addFile(ArchiveFile(archivePath, bytes.length, bytes));
         } else if (item.type == FileSystemItemType.directory) {
           // Add directory and its contents recursively
-          await _addDirectoryToArchive(archive, item.path, path.basename(item.path));
+          await ArchiveUtils.addDirectoryToArchive(archive, item.path, path.basename(item.path));
         }
       }
 
@@ -142,42 +145,29 @@ mixin class FileOperationEvent {
       }
 
       // Close progress dialog
-      Navigator.of(context).pop();
+      if (context.mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
 
       // Reload the directory to show the new zip file
       await ref.read(fileSystemServiceProvider).loadDirectory(currentDir);
     } catch (e) {
       // Close progress dialog
-      Navigator.of(context).pop();
+      if (context.mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
 
       // Show error dialog
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('Error'),
-            content: Text('An error occurred during compression: $e'),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK'))],
+            title: const Text(AppStrings.error),
+            content: Text('${AppStrings.compressError} $e'),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text(AppStrings.confirm))],
           );
         },
       );
-    }
-  }
-
-  // Helper method to add a directory and its contents to an archive
-  Future<void> _addDirectoryToArchive(Archive archive, String dirPath, String archivePath) async {
-    final dir = Directory(dirPath);
-    final entities = await dir.list(recursive: false).toList();
-
-    for (final entity in entities) {
-      final relativePath = path.join(archivePath, path.basename(entity.path));
-
-      if (entity is File) {
-        final bytes = await entity.readAsBytes();
-        archive.addFile(ArchiveFile(relativePath, bytes.length, bytes));
-      } else if (entity is Directory) {
-        await _addDirectoryToArchive(archive, entity.path, relativePath);
-      }
     }
   }
 
@@ -197,9 +187,9 @@ mixin class FileOperationEvent {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('Error'),
-            content: Text('The file "$newName" already exists.'),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK'))],
+            title: const Text(AppStrings.error),
+            content: Text(AppStrings.renameAlreadyExistsContent(newName)),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text(AppStrings.confirm))],
           );
         },
       );
@@ -214,9 +204,9 @@ mixin class FileOperationEvent {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('Error'),
-            content: Text('Failed to rename the file.'),
-            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK'))],
+            title: const Text(AppStrings.error),
+            content: const Text(AppStrings.renameFailed),
+            actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text(AppStrings.confirm))],
           );
         },
       );
