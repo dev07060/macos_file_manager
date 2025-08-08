@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/events/drag_drop_items_event.dart';
 import 'package:macos_file_manager/model/directory_node_data.dart';
@@ -42,20 +41,9 @@ class DirectoryNodeWidget extends HookConsumerWidget with DragDropItemsEvent, Ba
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Persist GlobalKeys for children across rebuilds to avoid flicker
-    final keysByPathState = useState<Map<String, GlobalKey>>({});
-    final List<GlobalKey> childKeys = node.isExpanded
-        ? node.visibleChildren.map((child) {
-            final existing = keysByPathState.value[child.path];
-            if (existing != null) return existing;
-            final newKey = GlobalKey();
-            keysByPathState.value = {
-              ...keysByPathState.value,
-              child.path: newKey,
-            };
-            return newKey;
-          }).toList()
-        : <GlobalKey>[];
+    final List<GlobalKey> childKeys =
+        node.isExpanded ? List.generate(node.visibleChildren.length, (_) => GlobalKey()) : [];
+    ref.watch(treeViewUpdateProvider);
     final size = MediaQuery.of(context).size;
     final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
     final selectedPath = ref.watch(selectedPathProvider);
@@ -125,7 +113,7 @@ class DirectoryNodeWidget extends HookConsumerWidget with DragDropItemsEvent, Ba
                       DirectoryNodeData child = entry.value;
 
                       return Padding(
-                        key: childKeys.length > index ? childKeys[index] : null,
+                        key: childKeys.length > index ? childKeys[index] : GlobalKey(),
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: DirectoryNodeWidget(
                           node: child,
