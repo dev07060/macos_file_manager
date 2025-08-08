@@ -3,18 +3,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/events/base_event.dart';
 import 'package:macos_file_manager/events/file_operation_event.dart';
 import 'package:macos_file_manager/events/file_organization_event.dart';
 import 'package:macos_file_manager/events/navigation_event.dart';
-import 'package:macos_file_manager/providers/file_system_providers.dart';
-import 'package:macos_file_manager/providers/tree_view_provider.dart';
 import 'package:macos_file_manager/state/base_state.dart';
-import 'package:macos_file_manager/widgets/favorites_section.dart';
-import 'package:macos_file_manager/widgets/file_category_settings.dart';
 import 'package:macos_file_manager/widgets/file_details.dart';
-import 'package:macos_file_manager/widgets/file_item.dart';
+import 'package:macos_file_manager/widgets/sidebar_panel.dart';
 import 'package:macos_file_manager/widgets/toolbar.dart';
 
 class HomePage extends HookConsumerWidget
@@ -30,11 +25,7 @@ class HomePage extends HookConsumerWidget
       return null;
     }, const []);
 
-    final items = fileSystemItems(ref);
-    final selectedCount = ref.watch(selectedItemsCountProvider);
-    final path = ref.watch(currentDirectoryProvider.notifier).state;
-    List<String> parts = path.split('/');
-    String result = parts.isNotEmpty ? parts.last : '';
+    // currentDirectoryProvider.watch ensures details panel updates appropriately without forcing sidebar/tree rerenders
 
     return Scaffold(
       body: Column(
@@ -43,115 +34,8 @@ class HomePage extends HookConsumerWidget
           Expanded(
             child: Row(
               children: [
-                // File/Folder list section (left side)
-                SizedBox(
-                  width: 300,
-                  child: Column(
-                    children: [
-                      // Add Favorites section above the file list
-                      const FavoritesSection(),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).appBarTheme.backgroundColor,
-                          border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 2.0),
-                                  child: Text(
-                                    result,
-                                    maxLines: 1,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Action icons section with consistent spacing
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Show action icons only when items are selected
-                                  if (selectedCount > 0) ...[
-                                    // Delete button
-                                    SizedBox(
-                                      width: 40,
-                                      child: IconButton(
-                                        icon: const Icon(Icons.delete_outline, size: 20),
-                                        tooltip: AppStrings.deleteSelectedItems,
-                                        onPressed: () => deleteSelectedItems(ref, context),
-                                      ),
-                                    ),
-                                    // Compress button
-                                    SizedBox(
-                                      width: 40,
-                                      child: IconButton(
-                                        icon: const Icon(Icons.archive_outlined, size: 20),
-                                        tooltip: AppStrings.compressSelectedItems,
-                                        onPressed: () => compressSelectedItems(ref, context),
-                                      ),
-                                    ),
-                                  ],
-                                  // Tree-view button - hide when multiple items selected
-                                  if (selectedCount <= 1)
-                                    SizedBox(
-                                      width: 40,
-                                      child: IconButton(
-                                        icon: const Icon(Icons.account_tree, size: 20),
-                                        tooltip: AppStrings.showTreeView,
-                                        onPressed: () {
-                                          ref.read(searchQueryProvider.notifier).state = null;
-                                          ref.read(treeViewNotifierProvider.notifier).showTreeView(path);
-                                        },
-                                      ),
-                                    ),
-                                  // AI organize button
-                                  SizedBox(
-                                    width: 40,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.auto_awesome, size: 20),
-                                      tooltip: AppStrings.organizeWithAI,
-                                      onPressed: () {
-                                        organizeDirectoryWithAI(ref, context);
-                                      },
-                                    ),
-                                  ),
-                                  // Settings button
-                                  SizedBox(
-                                    width: 40,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.settings, size: 20),
-                                      tooltip: AppStrings.fileCategorySettings,
-                                      onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) => const FileCategorySettingsDialog(),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            return FileItem(item: items[index]);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Sidebar (left)
+                const SizedBox(width: 300, child: SidebarPanel()),
                 // Divider
                 Container(width: 1, color: Theme.of(context).dividerColor),
                 // File details section (right side)

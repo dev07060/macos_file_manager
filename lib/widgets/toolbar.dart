@@ -105,6 +105,7 @@ class Toolbar extends HookConsumerWidget with BaseState, NavigationEvent, Favori
             onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),
             tooltip: isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme',
           ),
+          // Tree view is opened inline from context menus/buttons elsewhere
         ],
       ),
     );
