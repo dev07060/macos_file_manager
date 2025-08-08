@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/constants/file_constants.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
@@ -18,11 +19,11 @@ mixin class FileOrganizationEvent {
     if (!context.mounted) return;
 
     if (fileSystemItems.isEmpty) {
-      _showSnackBar(context, '정리할 파일이 없습니다.');
+      _showSnackBar(context, AppStrings.noFilesToOrganize);
       return;
     }
 
-    _showLoadingDialog(context, 'AI가 파일을 분석 중입니다...');
+    _showLoadingDialog(context, AppStrings.aiAnalyzingFiles);
 
     try {
       final fileToCategoryMap = await _analyzeFiles(ref, fileSystemItems);
@@ -31,7 +32,7 @@ mixin class FileOrganizationEvent {
       Navigator.of(context).pop(); // 분석 로딩 다이얼로그 닫기
 
       if (fileToCategoryMap.isEmpty) {
-        _showSnackBar(context, 'AI가 분류할 파일을 찾지 못했습니다.');
+        _showSnackBar(context, AppStrings.aiFailedToClassify);
         return;
       }
 
@@ -91,15 +92,15 @@ mixin class FileOrganizationEvent {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('파일 정리 제안'),
+          title: const Text(AppStrings.fileOrganizationProposal),
           content: SizedBox(
             width: double.maxFinite,
             height: MediaQuery.of(context).size.height * 0.5,
             child: SingleChildScrollView(child: _buildCategoryPreview(context, fileToCategoryMap)),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('취소')),
-            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('확인')),
+            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text(AppStrings.cancel)),
+            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text(AppStrings.confirm)),
           ],
         );
       },
@@ -116,7 +117,7 @@ mixin class FileOrganizationEvent {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
-      children:
+      children: 
           categoryToFileList.entries.map((categoryEntry) {
             final categoryName = categoryEntry.key;
             final filesInCategory = categoryEntry.value;
@@ -143,7 +144,7 @@ mixin class FileOrganizationEvent {
     String currentDir,
     Map<String, String> fileToCategoryMap,
   ) async {
-    _showLoadingDialog(context, '파일을 이동 중입니다...');
+    _showLoadingDialog(context, AppStrings.movingFiles);
 
     final List<Map<String, String>> movedFilesLog = [];
 
@@ -185,11 +186,11 @@ mixin class FileOrganizationEvent {
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text('파일 정리 완료'),
-          content: const Text('파일 정리가 완료되었습니다.'),
+          title: const Text(AppStrings.fileOrganizationComplete),
+          content: const Text(AppStrings.fileOrganizationCompleteMessage),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop('undo'), child: const Text('되돌리기')),
-            TextButton(onPressed: () => Navigator.of(context).pop('keep'), child: const Text('유지하기')),
+            TextButton(onPressed: () => Navigator.of(context).pop('undo'), child: const Text(AppStrings.undo)),
+            TextButton(onPressed: () => Navigator.of(context).pop('keep'), child: const Text(AppStrings.keep)),
           ],
         );
       },
@@ -198,7 +199,7 @@ mixin class FileOrganizationEvent {
     if (action == 'undo') {
       await _undoFileOrganization(context, ref, currentDir, movedFilesLog);
     } else if (action == 'keep') {
-      _showSnackBar(context, '파일 정리가 유지됩니다.');
+      _showSnackBar(context, AppStrings.fileOrganizationKept);
     }
   }
 
@@ -211,7 +212,7 @@ mixin class FileOrganizationEvent {
   ) async {
     if (!context.mounted) return;
 
-    _showLoadingDialog(context, '파일을 되돌리는 중입니다...');
+    _showLoadingDialog(context, AppStrings.undoingFiles);
 
     try {
       for (final logEntry in movedFilesLog) {
@@ -221,7 +222,7 @@ mixin class FileOrganizationEvent {
       }
 
       await ref.read(fileSystemServiceProvider).loadDirectory(currentDir);
-      _showSnackBar(context, '파일 위치를 되돌렸습니다.');
+      _showSnackBar(context, AppStrings.fileOrganizationUndone);
     } finally {
       if (context.mounted) {
         Navigator.of(context).pop(); // 되돌리기 로딩 다이얼로그 닫기
@@ -250,6 +251,6 @@ mixin class FileOrganizationEvent {
     if (context.mounted && Navigator.of(context).canPop()) {
       Navigator.of(context).pop(); // 열려있는 다이얼로그 닫기
     }
-    _showSnackBar(context, '파일 정리 중 오류 발생: $error');
+    _showSnackBar(context, '${AppStrings.errorDuringOrganization} $error');
   }
 }

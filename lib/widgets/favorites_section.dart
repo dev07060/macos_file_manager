@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/events/drag_drop_items_event.dart';
 import 'package:macos_file_manager/events/navigation_event.dart';
 import 'package:macos_file_manager/model/file_system_item.dart';
@@ -36,7 +37,7 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
           child: Row(
             children: [
               Text(
-                'Favorites',
+                AppStrings.favorites,
                 style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleMedium?.color),
               ),
               const Spacer(),
@@ -51,7 +52,7 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
                 onPressed: () {
                   isExpanded.value = !isExpanded.value;
                 },
-                tooltip: isExpanded.value ? 'Collapse' : 'Expand',
+                tooltip: isExpanded.value ? AppStrings.collapse : AppStrings.expand,
               ),
             ],
           ),
@@ -62,7 +63,7 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                'No favorites',
+                AppStrings.noFavorites,
                 style: TextStyle(color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600),
               ),
             )
@@ -110,13 +111,9 @@ class FavoritesSection extends HookConsumerWidget with NavigationEvent, DragDrop
                                             : Colors.blue.withValues(alpha: .1),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: Text(
-                                    'current location',
-                                    style: TextStyle(
-                                      color: isDarkMode ? Colors.blue.shade300 : Colors.blue,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  child: const Text(
+                                    AppStrings.currentLocation,
+                                    style: TextStyle(color: Colors.blue, fontSize: 10, fontWeight: FontWeight.w500),
                                   ),
                                 ),
                             ],

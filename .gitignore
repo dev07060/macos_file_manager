@@ -51,3 +51,4 @@ assets/env/.dev.env
 assets/keys/service-account-key.json
 /android/app/profile
 /android/app/release
+.gemini/

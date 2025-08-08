@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/events/base_event.dart';
 import 'package:macos_file_manager/events/file_operation_event.dart';
 import 'package:macos_file_manager/events/script_event.dart';
@@ -85,7 +86,7 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
         if (selectedItem == null) {
           return Center(
             child: Text(
-              'No file selected',
+              AppStrings.noFileSelected,
               style: TextStyle(fontSize: 16, color: isDarkMode ? Colors.grey.shade400 : Colors.grey),
             ),
           );
@@ -132,7 +133,7 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
                             isDarkMode ? Colors.blue.withValues(alpha: .1) : Colors.blue.withValues(alpha: .05),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       ),
-                      child: const Text('Run .sh'),
+                      child: const Text(AppStrings.runSh),
                       onPressed: () => executeScript(context, ref, selectedItem),
                     ),
                   ),
@@ -177,7 +178,7 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Preview',
+                                          AppStrings.preview,
                                           style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -218,8 +219,8 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Error: $error', style: TextStyle(color: isDarkMode ? Colors.red.shade300 : Colors.red)),
-                TextButton(child: const Text('go back'), onPressed: () => treeViewProvider.hideTreeView()),
+                Text('${AppStrings.errorLoadingTree} $error', style: TextStyle(color: isDarkMode ? Colors.red.shade300 : Colors.red)),
+                TextButton(child: const Text(AppStrings.goBack), onPressed: () => treeViewProvider.hideTreeView()),
               ],
             ),
           ),
@@ -234,7 +235,7 @@ class FileDetails extends HookConsumerWidget with BaseState, BaseEvent, FileOper
 
         return IconButton(
           icon: Icon(Icons.account_tree, color: isDarkMode ? Colors.blue.shade300 : Colors.blue.shade700),
-          tooltip: 'Show Directory Tree',
+          tooltip: AppStrings.showTreeView,
           onPressed: () {
             ref.read(treeViewNotifierProvider.notifier).showTreeView(item.path);
           },

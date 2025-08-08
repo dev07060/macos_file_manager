@@ -31,6 +31,7 @@ dependencies:
   googleapis_auth: ^2.0.0
   freezed_annotation: ^3.1.0  
   json_annotation: ^4.9.0
+  google_generative_ai: ^0.4.7
 
 dev_dependencies:
   flutter_test:

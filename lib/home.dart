@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/events/base_event.dart';
 import 'package:macos_file_manager/events/file_operation_event.dart';
 import 'package:macos_file_manager/events/file_organization_event.dart';
@@ -33,7 +34,7 @@ class HomePage extends HookConsumerWidget
     final selectedCount = ref.watch(selectedItemsCountProvider);
     final path = ref.watch(currentDirectoryProvider.notifier).state;
     List<String> parts = path.split('/');
-    String result = parts[parts.length - 1];
+    String result = parts.isNotEmpty ? parts.last : '';
 
     return Scaffold(
       body: Column(
@@ -64,7 +65,10 @@ class HomePage extends HookConsumerWidget
                                   child: Text(
                                     result,
                                     maxLines: 1,
-                                    style: TextStyle(fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -79,7 +83,7 @@ class HomePage extends HookConsumerWidget
                                       width: 40,
                                       child: IconButton(
                                         icon: const Icon(Icons.delete_outline, size: 20),
-                                        tooltip: 'Delete selected items',
+                                        tooltip: AppStrings.deleteSelectedItems,
                                         onPressed: () => deleteSelectedItems(ref, context),
                                       ),
                                     ),
@@ -88,7 +92,7 @@ class HomePage extends HookConsumerWidget
                                       width: 40,
                                       child: IconButton(
                                         icon: const Icon(Icons.archive_outlined, size: 20),
-                                        tooltip: 'Compress selected items',
+                                        tooltip: AppStrings.compressSelectedItems,
                                         onPressed: () => compressSelectedItems(ref, context),
                                       ),
                                     ),
@@ -99,7 +103,7 @@ class HomePage extends HookConsumerWidget
                                       width: 40,
                                       child: IconButton(
                                         icon: const Icon(Icons.account_tree, size: 20),
-                                        tooltip: 'Show tree-view from dir',
+                                        tooltip: AppStrings.showTreeView,
                                         onPressed: () {
                                           ref.read(searchQueryProvider.notifier).state = null;
                                           ref.read(treeViewNotifierProvider.notifier).showTreeView(path);
@@ -111,7 +115,7 @@ class HomePage extends HookConsumerWidget
                                     width: 40,
                                     child: IconButton(
                                       icon: const Icon(Icons.auto_awesome, size: 20),
-                                      tooltip: 'Organize files with AI',
+                                      tooltip: AppStrings.organizeWithAI,
                                       onPressed: () {
                                         organizeDirectoryWithAI(ref, context);
                                       },
@@ -122,7 +126,7 @@ class HomePage extends HookConsumerWidget
                                     width: 40,
                                     child: IconButton(
                                       icon: const Icon(Icons.settings, size: 20),
-                                      tooltip: 'File category settings',
+                                      tooltip: AppStrings.fileCategorySettings,
                                       onPressed: () {
                                         showDialog(
                                           context: context,
