@@ -37,6 +37,12 @@ class TreeLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant TreeLinePainter oldDelegate) {
-    return oldDelegate.nodePositions != nodePositions || oldDelegate.isDarkMode != isDarkMode;
+    // Repaint only when positions or theme change; ignore unrelated rebuilds
+    if (oldDelegate.isDarkMode != isDarkMode) return true;
+    if (oldDelegate.nodePositions.length != nodePositions.length) return true;
+    for (int i = 0; i < nodePositions.length; i++) {
+      if (oldDelegate.nodePositions[i] != nodePositions[i]) return true;
+    }
+    return false;
   }
 }

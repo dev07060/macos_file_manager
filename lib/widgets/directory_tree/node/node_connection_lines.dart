@@ -13,7 +13,7 @@ class NodeConnectionLines extends StatefulWidget {
   State<NodeConnectionLines> createState() => _NodeConnectionLinesState();
 }
 
-class _NodeConnectionLinesState extends State<NodeConnectionLines> {
+class _NodeConnectionLinesState extends State<NodeConnectionLines> with AutomaticKeepAliveClientMixin<NodeConnectionLines> {
   List<double> _nodePositions = [];
   bool _isFirstBuild = true;
 
@@ -77,6 +77,7 @@ class _NodeConnectionLinesState extends State<NodeConnectionLines> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return RepaintBoundary(
       child: CustomPaint(
         painter: TreeLinePainter(nodePositions: _nodePositions, isDarkMode: widget.isDarkMode),
@@ -84,4 +85,7 @@ class _NodeConnectionLinesState extends State<NodeConnectionLines> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
