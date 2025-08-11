@@ -2,12 +2,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "file_manager",
+            "name": "file_manager_debug",
             "cwd": "${workspaceFolder}",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
             "flutterMode": "debug"
+        },
+        {
+            "name": "file_manager_release",
+            "cwd": "${workspaceFolder}",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "flutterMode": "release"
         },
     ]
 }

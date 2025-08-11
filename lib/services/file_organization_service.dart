@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_category_config.dart';
+import 'package:macos_file_manager/model/keyword_mapping.dart';
 import 'package:macos_file_manager/providers/file_category_config_provider.dart';
 import 'package:path/path.dart' as path;
 
@@ -88,6 +90,7 @@ class FileOrganizationService {
     OrganizationMethod method, {
     String? customRule,
     Map<String, dynamic>? fileMetadata,
+    FileCategoryConfig? config,
   }) {
     switch (method) {
       case OrganizationMethod.category:
@@ -105,9 +108,30 @@ class FileOrganizationService {
     }
   }
 
+  /// 키워드 기반 파일 분류 (외부 호출용)
+  ///
+  /// 특정 설정을 사용하여 파일을 키워드 기반으로 분류합니다.
+  ///
+  /// [fileName] 검사할 파일명
+  /// [contentSnippet] 파일 내용 (현재는 사용하지 않음)
+  /// [config] 사용할 파일 카테고리 설정 (null인 경우 현재 설정 사용)
+  ///
+  /// Returns: 매칭되는 카테고리명 또는 '기타' (매칭되는 규칙이 없는 경우)
+  String organizeFileByKeyword(String fileName, String contentSnippet, [FileCategoryConfig? config]) {
+    final targetConfig = config ?? _config;
+    final keywordCategory = _categorizeByKeyword(fileName, targetConfig.getKeywordMappingsSortedByPriority());
+    return keywordCategory ?? '기타';
+  }
+
   // 카테고리별 분류 로직
   String _categorizeByContent(String fileName, String contentSnippet) {
     final lowerContent = contentSnippet.toLowerCase();
+
+    // 키워드 기반 분류 (최우선)
+    final keywordCategory = _categorizeByKeyword(fileName, _config.getKeywordMappingsSortedByPriority());
+    if (keywordCategory != null) {
+      return keywordCategory;
+    }
 
     // 확장자 기반 분류
     final extension = path.extension(fileName).toLowerCase().replaceFirst('.', '');
@@ -127,6 +151,49 @@ class FileOrganizationService {
     }
 
     return '기타';
+  }
+
+  /// 키워드 기반 파일 분류
+  ///
+  /// 파일명을 키워드 매핑 규칙과 비교하여 해당하는 카테고리를 반환합니다.
+  /// 우선순위가 높은 규칙부터 순서대로 검사하며, 첫 번째로 매칭되는 규칙의 카테고리를 반환합니다.
+  ///
+  /// [fileName] 검사할 파일명
+  /// [keywordMappings] 우선순위별로 정렬된 키워드 매핑 리스트
+  ///
+  /// Returns: 매칭되는 카테고리명 또는 null (매칭되는 규칙이 없는 경우)
+  String? _categorizeByKeyword(String fileName, List<KeywordMapping> keywordMappings) {
+    if (keywordMappings.isEmpty) {
+      return null;
+    }
+
+    for (final mapping in keywordMappings) {
+      try {
+        if (mapping.isRegex) {
+          // 정규식 패턴 매칭
+          final regex = RegExp(mapping.pattern, caseSensitive: mapping.caseSensitive, multiLine: false, dotAll: false);
+
+          if (regex.hasMatch(fileName)) {
+            return mapping.category;
+          }
+        } else {
+          // 단순 문자열 포함 검사
+          final searchText = mapping.caseSensitive ? fileName : fileName.toLowerCase();
+          final pattern = mapping.caseSensitive ? mapping.pattern : mapping.pattern.toLowerCase();
+
+          if (searchText.contains(pattern)) {
+            return mapping.category;
+          }
+        }
+      } catch (e) {
+        // 정규식 오류 시 로그 기록하고 다음 매핑으로 진행
+        // 실제 운영 환경에서는 적절한 로깅 시스템을 사용해야 함
+        debugPrint('Regex error for pattern "${mapping.pattern}": $e');
+        continue;
+      }
+    }
+
+    return null; // 매칭되는 패턴 없음
   }
 
   // 날짜별 분류 로직

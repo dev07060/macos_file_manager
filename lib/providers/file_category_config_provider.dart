@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/model/file_category_config.dart';
+import 'package:macos_file_manager/model/keyword_mapping.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 파일 카테고리 설정을 관리하는 StateNotifier
@@ -118,6 +119,145 @@ class FileCategoryConfigNotifier extends StateNotifier<FileCategoryConfig> {
   List<String> getAvailableCategories() {
     return ['문서', '프레젠테이션', '이미지', '동영상', '음악', '소스코드', '압축파일', '실행파일', '기타'];
   }
+
+  // ========== 키워드 매핑 관리 메서드 ==========
+
+  /// 키워드 매핑 추가
+  Future<void> addKeywordMapping(KeywordMapping mapping) async {
+    try {
+      state = state.addKeywordMapping(mapping);
+      await _saveConfig();
+    } catch (e) {
+      developer.log('Error adding keyword mapping: $e');
+      rethrow;
+    }
+  }
+
+  /// 키워드 매핑 제거
+  Future<void> removeKeywordMapping(String pattern) async {
+    try {
+      state = state.removeKeywordMapping(pattern);
+      await _saveConfig();
+    } catch (e) {
+      developer.log('Error removing keyword mapping: $e');
+      rethrow;
+    }
+  }
+
+  /// 키워드 매핑 업데이트
+  Future<void> updateKeywordMapping(String oldPattern, KeywordMapping newMapping) async {
+    try {
+      state = state.updateKeywordMapping(oldPattern, newMapping);
+      await _saveConfig();
+    } catch (e) {
+      developer.log('Error updating keyword mapping: $e');
+      rethrow;
+    }
+  }
+
+  /// 키워드 매핑 우선순위 업데이트 (여러 매핑의 우선순위를 한 번에 변경)
+  Future<void> updateKeywordMappingPriorities(List<KeywordMapping> updatedMappings) async {
+    try {
+      // 기존 매핑들을 새로운 우선순위로 업데이트
+      final updatedKeywordMappings = <KeywordMapping>[];
+
+      for (final updatedMapping in updatedMappings) {
+        final existingIndex = state.keywordMappings.indexWhere(
+          (existing) => existing.pattern == updatedMapping.pattern,
+        );
+
+        if (existingIndex != -1) {
+          updatedKeywordMappings.add(updatedMapping);
+        }
+      }
+
+      // 업데이트되지 않은 매핑들도 포함
+      for (final existing in state.keywordMappings) {
+        if (!updatedMappings.any((updated) => updated.pattern == existing.pattern)) {
+          updatedKeywordMappings.add(existing);
+        }
+      }
+
+      state = state.copyWith(keywordMappings: updatedKeywordMappings);
+      await _saveConfig();
+    } catch (e) {
+      developer.log('Error updating keyword mapping priorities: $e');
+      rethrow;
+    }
+  }
+
+  /// 키워드 매핑 존재 여부 확인
+  bool hasKeywordMapping(String pattern) {
+    return state.hasKeywordMapping(pattern);
+  }
+
+  /// 특정 패턴의 키워드 매핑 반환
+  KeywordMapping? getKeywordMapping(String pattern) {
+    return state.getKeywordMapping(pattern);
+  }
+
+  /// 우선순위별로 정렬된 키워드 매핑 반환
+  List<KeywordMapping> getKeywordMappingsSortedByPriority() {
+    return state.getKeywordMappingsSortedByPriority();
+  }
+
+  /// 키워드 패턴 유효성 검사
+  String? validateKeywordPattern(String pattern, {bool isRegex = false, bool caseSensitive = false}) {
+    try {
+      if (pattern.trim().isEmpty) {
+        return '패턴이 비어있습니다.';
+      }
+
+      if (isRegex) {
+        // 정규식 유효성 검사
+        RegExp(pattern, caseSensitive: caseSensitive);
+      }
+
+      return null; // 유효함
+    } catch (e) {
+      return '유효하지 않은 정규식 패턴입니다: ${e.toString()}';
+    }
+  }
+
+  /// 키워드 매핑 전체 유효성 검사
+  List<String> validateAllKeywordMappings() {
+    return state.validateKeywordMappings();
+  }
+
+  /// 중복 패턴 검사
+  bool isDuplicatePattern(String pattern, {String? excludePattern}) {
+    return state.keywordMappings.any((mapping) => mapping.pattern == pattern && mapping.pattern != excludePattern);
+  }
+
+  /// 키워드 매핑 테스트 (파일명이 패턴과 매치되는지 확인)
+  bool testKeywordPattern(String fileName, KeywordMapping mapping) {
+    try {
+      if (mapping.isRegex) {
+        final regex = RegExp(mapping.pattern, caseSensitive: mapping.caseSensitive);
+        return regex.hasMatch(fileName);
+      } else {
+        final searchText = mapping.caseSensitive ? fileName : fileName.toLowerCase();
+        final pattern = mapping.caseSensitive ? mapping.pattern : mapping.pattern.toLowerCase();
+        return searchText.contains(pattern);
+      }
+    } catch (e) {
+      developer.log('Error testing keyword pattern "${mapping.pattern}" against "$fileName": $e');
+      return false;
+    }
+  }
+
+  /// 파일명에 대해 매칭되는 키워드 매핑 찾기
+  KeywordMapping? findMatchingKeywordMapping(String fileName) {
+    final sortedMappings = getKeywordMappingsSortedByPriority();
+
+    for (final mapping in sortedMappings) {
+      if (testKeywordPattern(fileName, mapping)) {
+        return mapping;
+      }
+    }
+
+    return null;
+  }
 }
 
 /// SharedPreferences provider
@@ -142,4 +282,41 @@ final extensionMappingsProvider = Provider<List<ExtensionMapping>>((ref) {
 final availableCategoriesProvider = Provider<List<String>>((ref) {
   final notifier = ref.watch(fileCategoryConfigProvider.notifier);
   return notifier.getAvailableCategories();
+});
+
+/// 우선순위별로 정렬된 키워드 매핑 리스트 provider
+final sortedKeywordMappingsProvider = Provider<List<KeywordMapping>>((ref) {
+  final notifier = ref.watch(fileCategoryConfigProvider.notifier);
+  ref.watch(fileCategoryConfigProvider); // 상태 변경 감지
+  return notifier.getKeywordMappingsSortedByPriority();
+});
+
+/// 키워드 매핑 리스트 provider (정렬되지 않은 원본)
+final keywordMappingsProvider = Provider<List<KeywordMapping>>((ref) {
+  final config = ref.watch(fileCategoryConfigProvider);
+  return config.keywordMappings;
+});
+
+/// 키워드 매핑 개수 provider
+final keywordMappingsCountProvider = Provider<int>((ref) {
+  final mappings = ref.watch(keywordMappingsProvider);
+  return mappings.length;
+});
+
+/// 사용자 정의 키워드 매핑만 필터링하는 provider
+final customKeywordMappingsProvider = Provider<List<KeywordMapping>>((ref) {
+  final mappings = ref.watch(sortedKeywordMappingsProvider);
+  return mappings.where((mapping) => mapping.isCustom).toList();
+});
+
+/// 정규식 키워드 매핑만 필터링하는 provider
+final regexKeywordMappingsProvider = Provider<List<KeywordMapping>>((ref) {
+  final mappings = ref.watch(sortedKeywordMappingsProvider);
+  return mappings.where((mapping) => mapping.isRegex).toList();
+});
+
+/// 단순 텍스트 키워드 매핑만 필터링하는 provider
+final textKeywordMappingsProvider = Provider<List<KeywordMapping>>((ref) {
+  final mappings = ref.watch(sortedKeywordMappingsProvider);
+  return mappings.where((mapping) => !mapping.isRegex).toList();
 });

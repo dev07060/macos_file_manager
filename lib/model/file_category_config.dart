@@ -1,8 +1,11 @@
+import 'keyword_mapping.dart';
+
 /// 파일 카테고리 설정을 관리하는 모델
 class FileCategoryConfig {
   final Map<String, String> extensionCategories;
+  final List<KeywordMapping> keywordMappings;
 
-  const FileCategoryConfig({this.extensionCategories = const {}});
+  const FileCategoryConfig({this.extensionCategories = const {}, this.keywordMappings = const []});
 
   /// 기본 설정을 반환
   factory FileCategoryConfig.defaultConfig() {
@@ -99,34 +102,153 @@ class FileCategoryConfig {
   }
 
   /// copyWith 메서드
-  FileCategoryConfig copyWith({Map<String, String>? extensionCategories}) {
-    return FileCategoryConfig(extensionCategories: extensionCategories ?? this.extensionCategories);
+  FileCategoryConfig copyWith({Map<String, String>? extensionCategories, List<KeywordMapping>? keywordMappings}) {
+    return FileCategoryConfig(
+      extensionCategories: extensionCategories ?? this.extensionCategories,
+      keywordMappings: keywordMappings ?? this.keywordMappings,
+    );
   }
 
   /// JSON으로 변환
   Map<String, dynamic> toJson() {
-    return {'extensionCategories': extensionCategories};
+    return {
+      'extensionCategories': extensionCategories,
+      'keywordMappings': keywordMappings.map((mapping) => mapping.toJson()).toList(),
+    };
   }
 
   /// JSON에서 생성
   factory FileCategoryConfig.fromJson(Map<String, dynamic> json) {
-    return FileCategoryConfig(extensionCategories: Map<String, String>.from(json['extensionCategories'] ?? {}));
+    return FileCategoryConfig(
+      extensionCategories: Map<String, String>.from(json['extensionCategories'] ?? {}),
+      keywordMappings:
+          (json['keywordMappings'] as List<dynamic>?)
+              ?.map((item) => KeywordMapping.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          [],
+    );
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is FileCategoryConfig && _mapEquals(extensionCategories, other.extensionCategories);
+    return other is FileCategoryConfig &&
+        _mapEquals(extensionCategories, other.extensionCategories) &&
+        _listEquals(keywordMappings, other.keywordMappings);
   }
 
   @override
-  int get hashCode => extensionCategories.hashCode;
+  int get hashCode => extensionCategories.hashCode ^ keywordMappings.hashCode;
+
+  /// 키워드 매핑 추가
+  FileCategoryConfig addKeywordMapping(KeywordMapping mapping) {
+    // 유효성 검사
+    final validationErrors = mapping.validate();
+    if (validationErrors.isNotEmpty) {
+      throw KeywordMappingException(validationErrors.first, _getErrorTypeFromMessage(validationErrors.first));
+    }
+
+    // 중복 패턴 검사
+    if (keywordMappings.any((existing) => existing.pattern == mapping.pattern)) {
+      throw const KeywordMappingException('동일한 패턴이 이미 존재합니다.', KeywordMappingErrorType.duplicatePattern);
+    }
+
+    final updatedMappings = List<KeywordMapping>.from(keywordMappings)..add(mapping);
+    return copyWith(keywordMappings: updatedMappings);
+  }
+
+  /// 키워드 매핑 제거
+  FileCategoryConfig removeKeywordMapping(String pattern) {
+    final updatedMappings = keywordMappings.where((mapping) => mapping.pattern != pattern).toList();
+    return copyWith(keywordMappings: updatedMappings);
+  }
+
+  /// 키워드 매핑 업데이트
+  FileCategoryConfig updateKeywordMapping(String oldPattern, KeywordMapping newMapping) {
+    // 유효성 검사
+    final validationErrors = newMapping.validate();
+    if (validationErrors.isNotEmpty) {
+      throw KeywordMappingException(validationErrors.first, _getErrorTypeFromMessage(validationErrors.first));
+    }
+
+    // 패턴이 변경된 경우 중복 검사
+    if (oldPattern != newMapping.pattern && keywordMappings.any((existing) => existing.pattern == newMapping.pattern)) {
+      throw const KeywordMappingException('동일한 패턴이 이미 존재합니다.', KeywordMappingErrorType.duplicatePattern);
+    }
+
+    final updatedMappings =
+        keywordMappings.map((mapping) => mapping.pattern == oldPattern ? newMapping : mapping).toList();
+    return copyWith(keywordMappings: updatedMappings);
+  }
+
+  /// 우선순위별로 정렬된 키워드 매핑 반환
+  List<KeywordMapping> getKeywordMappingsSortedByPriority() {
+    final sortedMappings = List<KeywordMapping>.from(keywordMappings);
+    sortedMappings.sort((a, b) => a.priority.compareTo(b.priority));
+    return sortedMappings;
+  }
+
+  /// 키워드 매핑 존재 여부 확인
+  bool hasKeywordMapping(String pattern) {
+    return keywordMappings.any((mapping) => mapping.pattern == pattern);
+  }
+
+  /// 특정 패턴의 키워드 매핑 반환
+  KeywordMapping? getKeywordMapping(String pattern) {
+    try {
+      return keywordMappings.firstWhere((mapping) => mapping.pattern == pattern);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// 키워드 매핑 유효성 검사
+  List<String> validateKeywordMappings() {
+    final errors = <String>[];
+    final patterns = <String>{};
+
+    for (final mapping in keywordMappings) {
+      // 개별 매핑 유효성 검사
+      final mappingErrors = mapping.validate();
+      errors.addAll(mappingErrors);
+
+      // 중복 패턴 검사
+      if (patterns.contains(mapping.pattern)) {
+        errors.add('중복된 패턴이 있습니다: ${mapping.pattern}');
+      } else {
+        patterns.add(mapping.pattern);
+      }
+    }
+
+    return errors;
+  }
+
+  /// 오류 메시지에서 오류 타입 추출
+  KeywordMappingErrorType _getErrorTypeFromMessage(String message) {
+    if (message.contains('패턴이 비어있습니다')) {
+      return KeywordMappingErrorType.emptyPattern;
+    } else if (message.contains('정규식 패턴')) {
+      return KeywordMappingErrorType.invalidRegex;
+    } else if (message.contains('카테고리가 비어있습니다')) {
+      return KeywordMappingErrorType.emptyCategory;
+    }
+    return KeywordMappingErrorType.emptyPattern;
+  }
 
   bool _mapEquals<K, V>(Map<K, V>? a, Map<K, V>? b) {
     if (a == null) return b == null;
     if (b == null || a.length != b.length) return false;
     for (final key in a.keys) {
       if (!b.containsKey(key) || b[key] != a[key]) return false;
+    }
+    return true;
+  }
+
+  bool _listEquals<T>(List<T>? a, List<T>? b) {
+    if (a == null) return b == null;
+    if (b == null || a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
     }
     return true;
   }
