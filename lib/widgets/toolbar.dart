@@ -4,6 +4,7 @@ import 'package:macos_file_manager/events/favorite_event.dart';
 import 'package:macos_file_manager/events/navigation_event.dart';
 import 'package:macos_file_manager/providers/favorites_provider.dart';
 import 'package:macos_file_manager/providers/theme_provider.dart';
+import 'package:macos_file_manager/routes/app_routes.dart';
 import 'package:macos_file_manager/state/base_state.dart';
 
 class Toolbar extends HookConsumerWidget with BaseState, NavigationEvent, FavoriteEvent {
@@ -100,6 +101,38 @@ class Toolbar extends HookConsumerWidget with BaseState, NavigationEvent, Favori
             ),
           ),
 
+          IconButton(
+            icon: Icon(
+              Icons.web,
+              color:
+                  ModalRoute.of(context)?.settings.name == AppRoutes.webview
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).iconTheme.color,
+            ),
+            onPressed: () async {
+              // Enhanced navigation with loading state and error handling
+              try {
+                if (ModalRoute.of(context)?.settings.name != AppRoutes.webview) {
+                  await Navigator.of(context).pushNamed(AppRoutes.webview);
+                }
+              } catch (e) {
+                // Handle navigation errors gracefully
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to open web browser: $e'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                }
+              }
+            },
+            tooltip:
+                ModalRoute.of(context)?.settings.name == AppRoutes.webview
+                    ? 'Web Browser (Active)'
+                    : 'Open Web Browser',
+          ),
           IconButton(
             icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode, color: Theme.of(context).iconTheme.color),
             onPressed: () => ref.read(themeProvider.notifier).toggleTheme(),

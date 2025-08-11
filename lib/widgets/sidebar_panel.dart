@@ -3,10 +3,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/events/file_operation_event.dart';
 import 'package:macos_file_manager/events/file_organization_event.dart';
-import 'package:macos_file_manager/widgets/file_category_settings.dart';
 import 'package:macos_file_manager/providers/file_system_providers.dart';
 import 'package:macos_file_manager/providers/tree_view_provider.dart';
+import 'package:macos_file_manager/routes/app_routes.dart';
 import 'package:macos_file_manager/widgets/favorites_section.dart';
+import 'package:macos_file_manager/widgets/file_category_settings.dart';
 import 'package:macos_file_manager/widgets/file_item.dart';
 
 class SidebarPanel extends HookConsumerWidget with FileOperationEvent, FileOrganizationEvent {
@@ -38,10 +39,7 @@ class SidebarPanel extends HookConsumerWidget with FileOperationEvent, FileOrgan
                       child: Text(
                         result,
                         maxLines: 1,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold, overflow: TextOverflow.ellipsis),
                       ),
                     ),
                   ),
@@ -84,6 +82,17 @@ class SidebarPanel extends HookConsumerWidget with FileOperationEvent, FileOrgan
                           icon: const Icon(Icons.auto_awesome, size: 20),
                           tooltip: AppStrings.organizeWithAI,
                           onPressed: () => organizeDirectoryWithAI(ref, context),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 40,
+                        child: IconButton(
+                          icon: const Icon(Icons.web, size: 20),
+                          tooltip: 'Open Web Browser',
+                          onPressed: () async {
+                            // Add smooth navigation with potential loading state
+                            await Navigator.of(context).pushNamed(AppRoutes.webview);
+                          },
                         ),
                       ),
                       SizedBox(
