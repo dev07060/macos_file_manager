@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/model/keyword_mapping.dart';
+import 'package:macos_file_manager/utils/keyword_mapping_error_handler.dart';
 
 class EditKeywordDialog extends HookConsumerWidget {
   final KeywordMapping originalMapping;
@@ -27,10 +28,10 @@ class EditKeywordDialog extends HookConsumerWidget {
     );
     final isRegex = useState<bool>(originalMapping.isRegex);
     final caseSensitive = useState<bool>(originalMapping.caseSensitive);
-    final patternError = useState<String?>(null);
-    final categoryError = useState<String?>(null);
-    final duplicateError = useState<String?>(null);
-    final testResult = useState<String?>(null);
+    final patternError = useState<KeywordMappingException?>(null);
+    final categoryError = useState<KeywordMappingException?>(null);
+    final duplicateError = useState<KeywordMappingException?>(null);
+    final testResult = useState<Map<String, dynamic>?>(null);
     final showHelp = useState<bool>(false);
 
     // Initialize category controller if not in dropdown
@@ -50,9 +51,32 @@ class EditKeywordDialog extends HookConsumerWidget {
       final pattern = patternController.text.trim();
       final category = selectedCategory.value ?? categoryController.text.trim();
 
-      // Pattern validation
-      if (pattern.isEmpty) {
-        patternError.value = '패턴을 입력해주세요.';
+      // Create temporary mapping for validation
+      final tempMapping = KeywordMapping(
+        pattern: pattern,
+        category: category,
+        isRegex: isRegex.value,
+        caseSensitive: caseSensitive.value,
+      );
+
+      // Validate using enhanced validation
+      final validationErrors = tempMapping.validate();
+      if (validationErrors.isNotEmpty) {
+        final firstError = validationErrors.first;
+        switch (firstError.type) {
+          case KeywordMappingErrorType.emptyPattern:
+          case KeywordMappingErrorType.invalidRegex:
+          case KeywordMappingErrorType.patternTooLong:
+          case KeywordMappingErrorType.patternTooComplex:
+            patternError.value = firstError;
+            break;
+          case KeywordMappingErrorType.emptyCategory:
+          case KeywordMappingErrorType.categoryTooLong:
+            categoryError.value = firstError;
+            break;
+          default:
+            patternError.value = firstError;
+        }
         return;
       }
 
@@ -62,23 +86,11 @@ class EditKeywordDialog extends HookConsumerWidget {
             mapping.pattern.toLowerCase() == pattern.toLowerCase() && mapping.pattern != originalMapping.pattern,
       );
       if (isDuplicate) {
-        duplicateError.value = '이미 존재하는 패턴입니다.';
-        return;
-      }
-
-      // Regex validation
-      if (isRegex.value) {
-        try {
-          RegExp(pattern, caseSensitive: caseSensitive.value);
-        } catch (e) {
-          patternError.value = '유효하지 않은 정규식 패턴입니다.';
-          return;
-        }
-      }
-
-      // Category validation
-      if (category.isEmpty) {
-        categoryError.value = '카테고리를 선택하거나 입력해주세요.';
+        duplicateError.value = const KeywordMappingException(
+          '이미 존재하는 패턴입니다.',
+          KeywordMappingErrorType.duplicatePattern,
+          userFriendlyMessage: '이미 같은 패턴의 규칙이 있습니다. 다른 패턴을 사용해주세요.',
+        );
         return;
       }
     }
@@ -89,27 +101,37 @@ class EditKeywordDialog extends HookConsumerWidget {
       final testFileName = testFileNameController.text.trim();
 
       if (pattern.isEmpty || testFileName.isEmpty) {
-        testResult.value = '패턴과 테스트 파일명을 모두 입력해주세요.';
+        testResult.value = {
+          'matches': false,
+          'error': '패턴과 테스트 파일명을 모두 입력해주세요.',
+          'suggestion': '패턴과 파일명을 입력한 후 다시 시도해주세요.',
+        };
         return;
       }
 
+      final tempMapping = KeywordMapping(
+        pattern: pattern,
+        category: 'test',
+        isRegex: isRegex.value,
+        caseSensitive: caseSensitive.value,
+      );
+
+      // Use enhanced pattern testing
+      final result = <String, dynamic>{'matches': false, 'error': null, 'suggestion': null};
+
       try {
-        bool matches = false;
-
-        if (isRegex.value) {
-          final regex = RegExp(pattern, caseSensitive: caseSensitive.value);
-          matches = regex.hasMatch(testFileName);
-        } else {
-          final searchText = caseSensitive.value ? testFileName : testFileName.toLowerCase();
-          final searchPattern = caseSensitive.value ? pattern : pattern.toLowerCase();
-          matches = searchText.contains(searchPattern);
-        }
-
-        testResult.value =
-            matches ? '✅ 매칭됨: "$testFileName"이 패턴과 일치합니다.' : '❌ 매칭되지 않음: "$testFileName"이 패턴과 일치하지 않습니다.';
+        result['matches'] = tempMapping.testPattern(testFileName, throwOnError: true);
       } catch (e) {
-        testResult.value = '❌ 패턴 테스트 오류: ${e.toString()}';
+        if (e is KeywordMappingException) {
+          result['error'] = e.displayMessage;
+          result['suggestion'] = e.suggestionMessage;
+        } else {
+          result['error'] = e.toString();
+          result['suggestion'] = '패턴을 확인하고 다시 시도해주세요.';
+        }
       }
+
+      testResult.value = result;
     }
 
     // Check if form has changes
@@ -150,7 +172,7 @@ class EditKeywordDialog extends HookConsumerWidget {
                 decoration: InputDecoration(
                   labelText: '패턴',
                   hintText: isRegex.value ? r'\d{4}.*report' : 'report',
-                  errorText: patternError.value ?? duplicateError.value,
+                  errorText: (patternError.value ?? duplicateError.value)?.displayMessage,
                   suffixIcon: IconButton(
                     icon: Icon(showHelp.value ? Icons.help : Icons.help_outline),
                     onPressed: () => showHelp.value = !showHelp.value,
@@ -222,7 +244,7 @@ class EditKeywordDialog extends HookConsumerWidget {
                 decoration: InputDecoration(
                   labelText: '새 카테고리 입력',
                   hintText: '보고서, 데이터, 백업 등',
-                  errorText: categoryError.value,
+                  errorText: categoryError.value?.displayMessage,
                   border: const OutlineInputBorder(),
                 ),
                 onChanged: (value) {
@@ -263,18 +285,15 @@ class EditKeywordDialog extends HookConsumerWidget {
                   ),
                   if (testResult.value != null) ...[
                     const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color:
-                            testResult.value!.startsWith('✅')
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.red.withValues(alpha: 0.1),
-                        border: Border.all(color: testResult.value!.startsWith('✅') ? Colors.green : Colors.red),
-                        borderRadius: BorderRadius.circular(4),
+                    KeywordMappingErrorHandler.buildPatternTestResult(
+                      testFileNameController.text,
+                      KeywordMapping(
+                        pattern: patternController.text,
+                        category: 'test',
+                        isRegex: isRegex.value,
+                        caseSensitive: caseSensitive.value,
                       ),
-                      child: Text(testResult.value!),
+                      testResult.value!,
                     ),
                   ],
                 ],
@@ -347,14 +366,31 @@ class EditKeywordDialog extends HookConsumerWidget {
                       final pattern = patternController.text.trim();
                       final category = selectedCategory.value ?? categoryController.text.trim();
 
-                      final updatedMapping = originalMapping.copyWith(
-                        pattern: pattern,
-                        category: category,
-                        isRegex: isRegex.value,
-                        caseSensitive: caseSensitive.value,
-                      );
+                      try {
+                        final updatedMapping = originalMapping.copyWith(
+                          pattern: pattern,
+                          category: category,
+                          isRegex: isRegex.value,
+                          caseSensitive: caseSensitive.value,
+                        );
 
-                      Navigator.of(context).pop(updatedMapping);
+                        // Final validation before returning
+                        final finalErrors = updatedMapping.validate();
+                        if (finalErrors.isNotEmpty) {
+                          KeywordMappingErrorHandler.showErrorSnackBar(context, finalErrors.first);
+                          return;
+                        }
+
+                        Navigator.of(context).pop(updatedMapping);
+                      } catch (e) {
+                        if (e is KeywordMappingException) {
+                          KeywordMappingErrorHandler.showErrorSnackBar(context, e);
+                        } else {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(SnackBar(content: Text('오류가 발생했습니다: ${e.toString()}')));
+                        }
+                      }
                     }
                   }
                   : null,

@@ -145,12 +145,16 @@ class FileCategoryConfig {
     // 유효성 검사
     final validationErrors = mapping.validate();
     if (validationErrors.isNotEmpty) {
-      throw KeywordMappingException(validationErrors.first, _getErrorTypeFromMessage(validationErrors.first));
+      throw validationErrors.first;
     }
 
     // 중복 패턴 검사
     if (keywordMappings.any((existing) => existing.pattern == mapping.pattern)) {
-      throw const KeywordMappingException('동일한 패턴이 이미 존재합니다.', KeywordMappingErrorType.duplicatePattern);
+      throw const KeywordMappingException(
+        '동일한 패턴이 이미 존재합니다.',
+        KeywordMappingErrorType.duplicatePattern,
+        userFriendlyMessage: '이미 같은 패턴의 규칙이 있습니다. 다른 패턴을 사용하거나 기존 규칙을 수정해주세요.',
+      );
     }
 
     final updatedMappings = List<KeywordMapping>.from(keywordMappings)..add(mapping);
@@ -168,12 +172,16 @@ class FileCategoryConfig {
     // 유효성 검사
     final validationErrors = newMapping.validate();
     if (validationErrors.isNotEmpty) {
-      throw KeywordMappingException(validationErrors.first, _getErrorTypeFromMessage(validationErrors.first));
+      throw validationErrors.first;
     }
 
     // 패턴이 변경된 경우 중복 검사
     if (oldPattern != newMapping.pattern && keywordMappings.any((existing) => existing.pattern == newMapping.pattern)) {
-      throw const KeywordMappingException('동일한 패턴이 이미 존재합니다.', KeywordMappingErrorType.duplicatePattern);
+      throw const KeywordMappingException(
+        '동일한 패턴이 이미 존재합니다.',
+        KeywordMappingErrorType.duplicatePattern,
+        userFriendlyMessage: '이미 같은 패턴의 규칙이 있습니다. 다른 패턴을 사용해주세요.',
+      );
     }
 
     final updatedMappings =
@@ -203,8 +211,8 @@ class FileCategoryConfig {
   }
 
   /// 키워드 매핑 유효성 검사
-  List<String> validateKeywordMappings() {
-    final errors = <String>[];
+  List<KeywordMappingException> validateKeywordMappings() {
+    final errors = <KeywordMappingException>[];
     final patterns = <String>{};
 
     for (final mapping in keywordMappings) {
@@ -214,7 +222,13 @@ class FileCategoryConfig {
 
       // 중복 패턴 검사
       if (patterns.contains(mapping.pattern)) {
-        errors.add('중복된 패턴이 있습니다: ${mapping.pattern}');
+        errors.add(
+          KeywordMappingException(
+            '중복된 패턴이 있습니다: ${mapping.pattern}',
+            KeywordMappingErrorType.duplicatePattern,
+            userFriendlyMessage: '패턴 "${mapping.pattern}"이 중복됩니다. 중복된 규칙을 제거해주세요.',
+          ),
+        );
       } else {
         patterns.add(mapping.pattern);
       }
@@ -223,16 +237,9 @@ class FileCategoryConfig {
     return errors;
   }
 
-  /// 오류 메시지에서 오류 타입 추출
-  KeywordMappingErrorType _getErrorTypeFromMessage(String message) {
-    if (message.contains('패턴이 비어있습니다')) {
-      return KeywordMappingErrorType.emptyPattern;
-    } else if (message.contains('정규식 패턴')) {
-      return KeywordMappingErrorType.invalidRegex;
-    } else if (message.contains('카테고리가 비어있습니다')) {
-      return KeywordMappingErrorType.emptyCategory;
-    }
-    return KeywordMappingErrorType.emptyPattern;
+  /// 키워드 매핑 일괄 유효성 검사 (문자열 메시지 반환)
+  List<String> validateKeywordMappingsAsStrings() {
+    return validateKeywordMappings().map((error) => error.displayMessage).toList();
   }
 
   bool _mapEquals<K, V>(Map<K, V>? a, Map<K, V>? b) {

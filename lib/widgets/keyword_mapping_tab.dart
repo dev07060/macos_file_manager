@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/model/keyword_mapping.dart';
 import 'package:macos_file_manager/providers/file_category_config_provider.dart';
+import 'package:macos_file_manager/utils/keyword_mapping_error_handler.dart';
 import 'package:macos_file_manager/widgets/dialogs/add_keyword_dialog.dart';
 
 /// 키워드 매핑 관리를 위한 탭 위젯
@@ -15,9 +16,9 @@ class KeywordMappingTab extends ConsumerStatefulWidget {
 
 class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
   String _searchQuery = '';
-  String _sortBy = 'priority'; // priority, pattern, category, type
-  bool _sortAscending = true;
-  String _filterType = 'all'; // all, regex, text, custom
+  final String _sortBy = 'priority'; // priority, pattern, category, type
+  final bool _sortAscending = true;
+  final String _filterType = 'all'; // all, regex, text, custom
 
   @override
   Widget build(BuildContext context) {
@@ -52,14 +53,14 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
       child: Row(
         children: [
           Text(
-            '키워드 매핑 ($totalCount개)',
+            '${AppStrings.keywordMapping} ($totalCount개)',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const Spacer(),
           ElevatedButton.icon(
             onPressed: () => _showAddKeywordDialog(),
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('키워드 추가'),
+            label: const Text(AppStrings.addKeyword),
             style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
           ),
         ],
@@ -82,7 +83,7 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
             flex: 2,
             child: TextField(
               decoration: const InputDecoration(
-                hintText: '패턴 또는 카테고리 검색...',
+                hintText: AppStrings.searchPatternOrCategory,
                 prefixIcon: Icon(Icons.search, size: 20),
                 border: OutlineInputBorder(),
                 contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -92,60 +93,60 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
             ),
           ),
 
-          const SizedBox(width: 12),
+          // const SizedBox(width: 12),
 
-          // 타입 필터
-          SizedBox(
-            width: 120,
-            child: DropdownButtonFormField<String>(
-              value: _filterType,
-              decoration: const InputDecoration(
-                labelText: '타입 필터',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                isDense: true,
-              ),
-              items: const [
-                DropdownMenuItem(value: 'all', child: Text('전체')),
-                DropdownMenuItem(value: 'regex', child: Text('정규식')),
-                DropdownMenuItem(value: 'text', child: Text('텍스트')),
-                DropdownMenuItem(value: 'custom', child: Text('사용자 정의')),
-              ],
-              onChanged: (value) => setState(() => _filterType = value ?? 'all'),
-            ),
-          ),
+          // // 타입 필터
+          // SizedBox(
+          //   width: 120,
+          //   child: DropdownButtonFormField<String>(
+          //     value: _filterType,
+          //     decoration: const InputDecoration(
+          //       labelText: '타입 필터',
+          //       border: OutlineInputBorder(),
+          //       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          //       isDense: true,
+          //     ),
+          //     items: const [
+          //       DropdownMenuItem(value: 'all', child: Text('전체')),
+          //       DropdownMenuItem(value: 'regex', child: Text('정규식')),
+          //       DropdownMenuItem(value: 'text', child: Text('텍스트')),
+          //       DropdownMenuItem(value: 'custom', child: Text('사용자 정의')),
+          //     ],
+          //     onChanged: (value) => setState(() => _filterType = value ?? 'all'),
+          //   ),
+          // ),
 
-          const SizedBox(width: 12),
+          // const SizedBox(width: 12),
 
-          // 정렬 기준
-          SizedBox(
-            width: 120,
-            child: DropdownButtonFormField<String>(
-              value: _sortBy,
-              decoration: const InputDecoration(
-                labelText: '정렬 기준',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                isDense: true,
-              ),
-              items: const [
-                DropdownMenuItem(value: 'priority', child: Text('우선순위')),
-                DropdownMenuItem(value: 'pattern', child: Text('패턴')),
-                DropdownMenuItem(value: 'category', child: Text('카테고리')),
-                DropdownMenuItem(value: 'type', child: Text('타입')),
-              ],
-              onChanged: (value) => setState(() => _sortBy = value ?? 'priority'),
-            ),
-          ),
+          // // 정렬 기준
+          // SizedBox(
+          //   width: 120,
+          //   child: DropdownButtonFormField<String>(
+          //     value: _sortBy,
+          //     decoration: const InputDecoration(
+          //       labelText: '정렬 기준',
+          //       border: OutlineInputBorder(),
+          //       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          //       isDense: true,
+          //     ),
+          //     items: const [
+          //       DropdownMenuItem(value: 'priority', child: Text('우선순위')),
+          //       DropdownMenuItem(value: 'pattern', child: Text('패턴')),
+          //       DropdownMenuItem(value: 'category', child: Text('카테고리')),
+          //       DropdownMenuItem(value: 'type', child: Text('타입')),
+          //     ],
+          //     onChanged: (value) => setState(() => _sortBy = value ?? 'priority'),
+          //   ),
+          // ),
 
-          const SizedBox(width: 8),
+          // const SizedBox(width: 8),
 
-          // 정렬 방향 토글
-          IconButton(
-            onPressed: () => setState(() => _sortAscending = !_sortAscending),
-            icon: Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
-            tooltip: _sortAscending ? '오름차순' : '내림차순',
-          ),
+          // // 정렬 방향 토글
+          // IconButton(
+          //   onPressed: () => setState(() => _sortAscending = !_sortAscending),
+          //   icon: Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward),
+          //   tooltip: _sortAscending ? '오름차순' : '내림차순',
+          // ),
         ],
       ),
     );
@@ -156,19 +157,54 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: .5),
         border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
       ),
       child: Row(
         children: [
-          const SizedBox(width: 24), // 드래그 핸들 공간
-          const SizedBox(width: 60, child: Text('우선순위', style: TextStyle(fontWeight: FontWeight.bold))),
-          const SizedBox(width: 200, child: Text('패턴', style: TextStyle(fontWeight: FontWeight.bold))),
-          const SizedBox(width: 150, child: Text('카테고리', style: TextStyle(fontWeight: FontWeight.bold))),
-          const SizedBox(width: 80, child: Text('타입', style: TextStyle(fontWeight: FontWeight.bold))),
-          const SizedBox(width: 80, child: Text('대소문자', style: TextStyle(fontWeight: FontWeight.bold))),
-          const Spacer(),
-          const SizedBox(width: 120, child: Text('작업', style: TextStyle(fontWeight: FontWeight.bold))),
+          // 우선순위 (드래그 핸들 공간 제거됨)
+          SizedBox(
+            width: 60,
+            child: Text(
+              AppStrings.priority,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 8), // Gap과 동일한 간격
+          // 패턴
+          SizedBox(
+            width: 200,
+            child: Text(AppStrings.pattern, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          // 카테고리
+          SizedBox(
+            width: 150,
+            child: Text(
+              AppStrings.category,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          // 타입
+          SizedBox(
+            width: 80,
+            child: Text(AppStrings.type, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          // 대소문자
+          SizedBox(
+            width: 80,
+            child: Text(
+              AppStrings.caseSensitive,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          // 작업
+          SizedBox(
+            width: 120,
+            child: Text(AppStrings.actions, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );
@@ -185,8 +221,8 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
             const SizedBox(height: 16),
             Text(
               _searchQuery.isNotEmpty || _filterType != 'all'
-                  ? '검색 조건에 맞는 키워드 매핑이 없습니다.'
-                  : '키워드 매핑이 없습니다.\n"키워드 추가" 버튼을 클릭하여 새 매핑을 추가하세요.',
+                  ? AppStrings.noMatchingKeywordMappings
+                  : AppStrings.noKeywordMappings,
               textAlign: TextAlign.center,
               style: Theme.of(
                 context,
@@ -214,18 +250,14 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: .3))),
-        color: index % 2 == 0 ? null : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: .1),
+        color:
+            index % 2 == 0
+                ? Theme.of(context).colorScheme.surface
+                : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: .3),
       ),
       child: Row(
         children: [
-          // 드래그 핸들
-          ReorderableDragStartListener(
-            index: index,
-            child: const Icon(Icons.drag_handle, size: 20, color: Colors.grey),
-          ),
-          const SizedBox(width: 4),
-
-          // 우선순위
+          // 우선순위 (드래그 핸들 제거됨)
           SizedBox(
             width: 60,
             child: Container(
@@ -246,19 +278,23 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
               ),
             ),
           ),
-
+          const SizedBox(width: 8), // Gap 대신 SizedBox 사용하여 헤더와 일치
           // 패턴
           SizedBox(
             width: 200,
             child: Text(
               mapping.pattern,
+              textAlign: TextAlign.center,
               style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.w500),
               overflow: TextOverflow.ellipsis,
             ),
           ),
 
           // 카테고리
-          SizedBox(width: 150, child: Text(mapping.category, overflow: TextOverflow.ellipsis)),
+          SizedBox(
+            width: 150,
+            child: Text(mapping.category, textAlign: TextAlign.center, overflow: TextOverflow.ellipsis),
+          ),
 
           // 타입 (정규식/텍스트)
           SizedBox(
@@ -273,7 +309,7 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
                 ),
               ),
               child: Text(
-                mapping.isRegex ? '정규식' : '텍스트',
+                mapping.isRegex ? AppStrings.regex : AppStrings.text,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
@@ -294,8 +330,6 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
             ),
           ),
 
-          const Spacer(),
-
           // 작업 버튼들
           SizedBox(
             width: 120,
@@ -306,7 +340,7 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
                 IconButton(
                   onPressed: () => _showTestPatternDialog(mapping),
                   icon: const Icon(Icons.play_arrow, size: 18),
-                  tooltip: '패턴 테스트',
+                  tooltip: AppStrings.patternTest,
                   constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
 
@@ -432,7 +466,19 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
     }
 
     // 변경사항 저장
-    ref.read(fileCategoryConfigProvider.notifier).updateKeywordMappingPriorities(updatedMappings);
+    try {
+      ref.read(fileCategoryConfigProvider.notifier).updateKeywordMappingPriorities(updatedMappings);
+    } catch (e) {
+      if (mounted) {
+        if (e is KeywordMappingException) {
+          KeywordMappingErrorHandler.showErrorSnackBar(context, e);
+        } else {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('${AppStrings.priorityUpdateError} ${e.toString()}')));
+        }
+      }
+    }
   }
 
   /// 키워드 추가 다이얼로그 표시
@@ -443,10 +489,26 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
     showDialog(
       context: context,
       builder: (context) => AddKeywordDialog(categories: categories, existingMappings: existingMappings),
-    ).then((result) {
+    ).then((result) async {
       if (result != null && result is KeywordMapping) {
-        ref.read(fileCategoryConfigProvider.notifier).addKeywordMapping(result);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('키워드 매핑 "${result.pattern}"이(가) 추가되었습니다.')));
+        try {
+          await ref.read(fileCategoryConfigProvider.notifier).addKeywordMapping(result);
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(AppStrings.keywordMappingAdded(result.pattern))));
+          }
+        } catch (e) {
+          if (mounted) {
+            if (e is KeywordMappingException) {
+              KeywordMappingErrorHandler.showErrorSnackBar(context, e);
+            } else {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('${AppStrings.keywordMappingAddError} ${e.toString()}')));
+            }
+          }
+        }
       }
     });
   }
@@ -454,7 +516,7 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
   /// 키워드 편집 다이얼로그 표시
   void _showEditKeywordDialog(KeywordMapping mapping) {
     // TODO: EditKeywordDialog 구현 후 연결
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('키워드 편집 다이얼로그는 다음 작업에서 구현됩니다.')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(AppStrings.keywordEditNotImplemented)));
   }
 
   /// 패턴 테스트 다이얼로그 표시
@@ -468,15 +530,32 @@ class _KeywordMappingTabState extends ConsumerState<KeywordMappingTab> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: const Text('키워드 매핑 삭제'),
-            content: Text('패턴 "$pattern"을(를) 삭제하시겠습니까?'),
+            title: const Text(AppStrings.keywordMappingDelete),
+            content: Text(AppStrings.keywordMappingDeleteConfirm(pattern)),
             actions: [
               TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text(AppStrings.cancel)),
               TextButton(
-                onPressed: () {
-                  ref.read(fileCategoryConfigProvider.notifier).removeKeywordMapping(pattern);
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('키워드 매핑 "$pattern"이(가) 삭제되었습니다.')));
+                onPressed: () async {
+                  try {
+                    await ref.read(fileCategoryConfigProvider.notifier).removeKeywordMapping(pattern);
+                    if (mounted) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(AppStrings.keywordMappingDeleted(pattern))));
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      Navigator.of(context).pop();
+                      if (e is KeywordMappingException) {
+                        KeywordMappingErrorHandler.showErrorSnackBar(context, e);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('${AppStrings.keywordMappingDeleteError} ${e.toString()}')),
+                        );
+                      }
+                    }
+                  }
                 },
                 child: const Text(AppStrings.delete, style: TextStyle(color: Colors.red)),
               ),
@@ -510,7 +589,7 @@ class _PatternTestDialogState extends ConsumerState<_PatternTestDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('패턴 테스트'),
+      title: const Text(AppStrings.patternTest),
       content: SizedBox(
         width: 400,
         child: Column(
@@ -527,10 +606,13 @@ class _PatternTestDialogState extends ConsumerState<_PatternTestDialog> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('패턴: ${widget.mapping.pattern}', style: const TextStyle(fontFamily: 'monospace')),
-                  Text('타입: ${widget.mapping.isRegex ? '정규식' : '텍스트'}'),
-                  Text('대소문자 구분: ${widget.mapping.caseSensitive ? '예' : '아니오'}'),
-                  Text('카테고리: ${widget.mapping.category}'),
+                  Text(
+                    '${AppStrings.pattern}: ${widget.mapping.pattern}',
+                    style: const TextStyle(fontFamily: 'monospace'),
+                  ),
+                  Text('${AppStrings.type}: ${widget.mapping.isRegex ? AppStrings.regex : AppStrings.text}'),
+                  Text('${AppStrings.caseSensitiveMatching}: ${widget.mapping.caseSensitive ? '예' : '아니오'}'),
+                  Text('${AppStrings.category}: ${widget.mapping.category}'),
                 ],
               ),
             ),
@@ -541,7 +623,7 @@ class _PatternTestDialogState extends ConsumerState<_PatternTestDialog> {
             TextField(
               controller: _testController,
               decoration: const InputDecoration(
-                labelText: '테스트할 파일명',
+                labelText: AppStrings.testFileName,
                 hintText: 'example_file.txt',
                 border: OutlineInputBorder(),
               ),
@@ -571,7 +653,7 @@ class _PatternTestDialogState extends ConsumerState<_PatternTestDialog> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _testResult! ? '매치됨' : '매치되지 않음',
+                        _testResult! ? AppStrings.matched : AppStrings.notMatched,
                         style: TextStyle(
                           color: _testResult! ? Colors.green[700] : Colors.red[700],
                           fontWeight: FontWeight.w500,
@@ -625,7 +707,7 @@ class _PatternTestDialogState extends ConsumerState<_PatternTestDialog> {
     } catch (e) {
       setState(() {
         _testResult = null;
-        _errorMessage = '패턴 테스트 중 오류 발생: $e';
+        _errorMessage = '${AppStrings.patternTestError} $e';
       });
     }
   }

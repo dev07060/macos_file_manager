@@ -83,6 +83,87 @@ class AppStrings {
   static const String undoingFiles = '파일을 되돌리는 중입니다...';
   static const String errorDuringOrganization = '파일 정리 중 오류 발생:';
 
+  // File Organization - Enhanced
+  static const String detailsView = '상세 보기';
+  static const String fileOrganizationDetailedReport = '파일 정리 상세 보고서';
+  static const String keywordBasedOrganization = '키워드 기반 정리';
+  static const String extensionBasedOrganization = '확장자 기반 정리';
+  static const String otherOrganization = '기타 정리';
+  static const String categorySummary = '카테고리별 요약';
+  static const String patternMatch = '패턴';
+  static const String extensionMatch = '확장자';
+  static const String filesExcludedFromOrganization = '선택된 파일들이 정리에서 제외되었습니다';
+  static const String fileDeleteConfirmTitle = '파일 삭제 확인';
+  static String fileDeleteConfirmContent(int count) => '선택된 $count개 파일을 영구적으로 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.';
+  static String filesDeletedSuccessfully(int count) => '$count개 파일이 삭제되었습니다';
+  static String filesDeletedWithErrors(int deleted, int failed) => '$deleted개 파일 삭제 완료, $failed개 파일 삭제 실패';
+  static const String folderName = '폴더명';
+  static const String fileName = '파일명';
+  static const String exclude = '제외';
+  static const String selectFolder = '폴더를 선택하세요';
+  static String filesSelected(int count) => '$count개 선택됨';
+
+  // Keyword Mapping
+  static const String keywordMapping = '키워드 매핑';
+  static const String addKeyword = '키워드 추가';
+  static const String priority = '우선순위';
+  static const String pattern = '패턴';
+  static const String category = '카테고리';
+  static const String type = '타입';
+  static const String caseSensitive = '대소문자';
+  static const String actions = '작업';
+  static const String regex = '정규식';
+  static const String text = '텍스트';
+  static const String patternTest = '패턴 테스트';
+  static const String keywordMappingDelete = '키워드 매핑 삭제';
+  static String keywordMappingDeleteConfirm(String pattern) => '패턴 "$pattern"을(를) 삭제하시겠습니까?';
+  static String keywordMappingAdded(String pattern) => '키워드 매핑 "$pattern"이(가) 추가되었습니다.';
+  static String keywordMappingDeleted(String pattern) => '키워드 매핑 "$pattern"이(가) 삭제되었습니다.';
+  static const String keywordMappingAddError = '키워드 매핑 추가 중 오류가 발생했습니다:';
+  static const String keywordMappingDeleteError = '키워드 매핑 삭제 중 오류가 발생했습니다:';
+  static const String priorityUpdateError = '우선순위 업데이트 중 오류가 발생했습니다:';
+  static const String keywordEditNotImplemented = '키워드 편집 다이얼로그는 다음 작업에서 구현됩니다.';
+  static const String noKeywordMappings = '키워드 매핑이 없습니다.\n"키워드 추가" 버튼을 클릭하여 새 매핑을 추가하세요.';
+  static const String noMatchingKeywordMappings = '검색 조건에 맞는 키워드 매핑이 없습니다.';
+  static const String searchPatternOrCategory = '패턴 또는 카테고리 검색...';
+
+  // Pattern Test Dialog
+  static const String testFileName = '테스트할 파일명';
+  static const String matched = '매치됨';
+  static const String notMatched = '매치되지 않음';
+  static const String patternTestError = '패턴 테스트 중 오류 발생:';
+
+  // Add Keyword Dialog
+  static const String addKeywordRule = '키워드 규칙 추가';
+  static const String useRegex = '정규식 사용';
+  static const String advancedPatternMatching = '고급 패턴 매칭';
+  static const String caseSensitiveMatching = '대소문자 구분';
+  static const String selectExistingCategory = '기존 카테고리 선택';
+  static const String or = '또는';
+  static const String enterNewCategory = '새 카테고리 입력';
+  static const String newCategoryHint = '보고서, 데이터, 백업 등';
+  static const String patternTestSection = '패턴 테스트';
+  static const String patternTestDescription = '패턴이 올바르게 작동하는지 확인';
+  static const String testFileNameLabel = '테스트 파일명';
+  static const String testFileNameHint = '2024_annual_report.pdf';
+  static const String runTest = '테스트 실행';
+  static const String patternExamples = '패턴 예시';
+  static const String simpleText = '단순 텍스트:';
+  static const String regexPatterns = '정규식 패턴:';
+  static const String patternAndTestFileRequired = '패턴과 테스트 파일명을 모두 입력해주세요.';
+  static const String patternAndFileNameRequired = '패턴과 파일명을 입력한 후 다시 시도해주세요.';
+  static const String checkPatternAndRetry = '패턴을 확인하고 다시 시도해주세요.';
+  static const String errorOccurred = '오류가 발생했습니다:';
+
+  // File Categories
+  static const String sourceCode = '소스코드';
+  static const String invoice = '청구서';
+  static const String contract = '계약서';
+  static const String document = '문서';
+  static const String other = '기타';
+  static const String user = '사용자';
+  static const String default_ = '기본';
+
   // Generic dialogs
   static const String deleteConfirmTitle = '삭제 확인';
   static String deleteConfirmContent(int count) => '선택한 파일 $count개를 삭제하시겠습니까?';

@@ -168,9 +168,9 @@ class _ExtensionMappingTab extends ConsumerWidget {
                 width: 150,
                 child: Text(AppStrings.categoryLabel, style: TextStyle(fontWeight: FontWeight.bold)),
               ),
-              SizedBox(width: 80, child: Text('타입', style: TextStyle(fontWeight: FontWeight.bold))),
+              SizedBox(width: 80, child: Text(AppStrings.type, style: TextStyle(fontWeight: FontWeight.bold))),
               Spacer(),
-              SizedBox(width: 100, child: Text('작업', style: TextStyle(fontWeight: FontWeight.bold))),
+              SizedBox(width: 100, child: Text(AppStrings.actions, style: TextStyle(fontWeight: FontWeight.bold))),
             ],
           ),
         ),
@@ -216,7 +216,7 @@ class _ExtensionMappingTab extends ConsumerWidget {
                           ),
                         ),
                         child: Text(
-                          mapping.isCustom ? '사용자' : '기본',
+                          mapping.isCustom ? AppStrings.user : AppStrings.default_,
                           style: TextStyle(
                             fontSize: 12,
                             color: mapping.isCustom ? Colors.blue : Colors.grey[600],

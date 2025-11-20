@@ -129,7 +129,16 @@ class FileCategoryConfigNotifier extends StateNotifier<FileCategoryConfig> {
       await _saveConfig();
     } catch (e) {
       developer.log('Error adding keyword mapping: $e');
-      rethrow;
+      if (e is KeywordMappingException) {
+        rethrow;
+      } else {
+        throw KeywordMappingException(
+          '키워드 매핑 추가 중 오류가 발생했습니다.',
+          KeywordMappingErrorType.runtimeRegexError,
+          technicalDetails: e.toString(),
+          userFriendlyMessage: '키워드 규칙을 추가하는 중 문제가 발생했습니다. 다시 시도해주세요.',
+        );
+      }
     }
   }
 
@@ -140,7 +149,16 @@ class FileCategoryConfigNotifier extends StateNotifier<FileCategoryConfig> {
       await _saveConfig();
     } catch (e) {
       developer.log('Error removing keyword mapping: $e');
-      rethrow;
+      if (e is KeywordMappingException) {
+        rethrow;
+      } else {
+        throw KeywordMappingException(
+          '키워드 매핑 제거 중 오류가 발생했습니다.',
+          KeywordMappingErrorType.runtimeRegexError,
+          technicalDetails: e.toString(),
+          userFriendlyMessage: '키워드 규칙을 제거하는 중 문제가 발생했습니다. 다시 시도해주세요.',
+        );
+      }
     }
   }
 
@@ -151,7 +169,16 @@ class FileCategoryConfigNotifier extends StateNotifier<FileCategoryConfig> {
       await _saveConfig();
     } catch (e) {
       developer.log('Error updating keyword mapping: $e');
-      rethrow;
+      if (e is KeywordMappingException) {
+        rethrow;
+      } else {
+        throw KeywordMappingException(
+          '키워드 매핑 업데이트 중 오류가 발생했습니다.',
+          KeywordMappingErrorType.runtimeRegexError,
+          technicalDetails: e.toString(),
+          userFriendlyMessage: '키워드 규칙을 수정하는 중 문제가 발생했습니다. 다시 시도해주세요.',
+        );
+      }
     }
   }
 
@@ -201,27 +228,106 @@ class FileCategoryConfigNotifier extends StateNotifier<FileCategoryConfig> {
     return state.getKeywordMappingsSortedByPriority();
   }
 
-  /// 키워드 패턴 유효성 검사
-  String? validateKeywordPattern(String pattern, {bool isRegex = false, bool caseSensitive = false}) {
-    try {
-      if (pattern.trim().isEmpty) {
-        return '패턴이 비어있습니다.';
-      }
+  /// 키워드 패턴 유효성 검사 (향상된 버전)
+  KeywordMappingException? validateKeywordPattern(String pattern, {bool isRegex = false, bool caseSensitive = false}) {
+    final tempMapping = KeywordMapping(
+      pattern: pattern,
+      category: 'temp', // 임시 카테고리
+      isRegex: isRegex,
+      caseSensitive: caseSensitive,
+    );
 
-      if (isRegex) {
-        // 정규식 유효성 검사
-        RegExp(pattern, caseSensitive: caseSensitive);
-      }
+    return tempMapping.validatePattern();
+  }
 
-      return null; // 유효함
-    } catch (e) {
-      return '유효하지 않은 정규식 패턴입니다: ${e.toString()}';
-    }
+  /// 키워드 패턴 유효성 검사 (문자열 반환)
+  String? validateKeywordPatternAsString(String pattern, {bool isRegex = false, bool caseSensitive = false}) {
+    final error = validateKeywordPattern(pattern, isRegex: isRegex, caseSensitive: caseSensitive);
+    return error?.displayMessage;
   }
 
   /// 키워드 매핑 전체 유효성 검사
-  List<String> validateAllKeywordMappings() {
+  List<KeywordMappingException> validateAllKeywordMappings() {
     return state.validateKeywordMappings();
+  }
+
+  /// 키워드 매핑 전체 유효성 검사 (문자열 반환)
+  List<String> validateAllKeywordMappingsAsStrings() {
+    return state.validateKeywordMappingsAsStrings();
+  }
+
+  /// 키워드 매핑 건강성 검사
+  ///
+  /// 모든 키워드 매핑의 유효성을 검사하고 문제가 있는 규칙들을 반환합니다.
+  ///
+  /// Returns: 문제가 있는 패턴과 오류 메시지의 맵
+  Map<String, String> checkKeywordMappingHealth() {
+    final issues = <String, String>{};
+
+    for (final mapping in state.keywordMappings) {
+      final validationErrors = mapping.validate();
+      if (validationErrors.isNotEmpty) {
+        issues[mapping.pattern] = validationErrors.first.displayMessage;
+      }
+    }
+
+    return issues;
+  }
+
+  /// 손상된 키워드 매핑 자동 복구
+  ///
+  /// 유효하지 않은 키워드 매핑들을 자동으로 제거하거나 수정합니다.
+  ///
+  /// Returns: 복구된 매핑 개수
+  Future<int> repairKeywordMappings() async {
+    final validMappings = <KeywordMapping>[];
+    int repairedCount = 0;
+
+    for (final mapping in state.keywordMappings) {
+      final validationErrors = mapping.validate();
+
+      if (validationErrors.isEmpty) {
+        validMappings.add(mapping);
+      } else {
+        // 복구 시도
+        KeywordMapping? repairedMapping;
+
+        try {
+          // 패턴이 너무 긴 경우 자르기
+          if (validationErrors.any((e) => e.type == KeywordMappingErrorType.patternTooLong)) {
+            repairedMapping = mapping.copyWith(pattern: mapping.pattern.substring(0, 200));
+          }
+
+          // 카테고리가 너무 긴 경우 자르기
+          if (validationErrors.any((e) => e.type == KeywordMappingErrorType.categoryTooLong)) {
+            repairedMapping = (repairedMapping ?? mapping).copyWith(category: mapping.category.substring(0, 50));
+          }
+
+          // 정규식 오류인 경우 단순 텍스트로 변경
+          if (validationErrors.any((e) => e.type == KeywordMappingErrorType.invalidRegex)) {
+            repairedMapping = (repairedMapping ?? mapping).copyWith(isRegex: false);
+          }
+
+          // 복구된 매핑이 유효한지 확인
+          if (repairedMapping != null && repairedMapping.validate().isEmpty) {
+            validMappings.add(repairedMapping);
+            repairedCount++;
+            developer.log('Repaired keyword mapping: ${mapping.pattern} -> ${repairedMapping.pattern}');
+          } else {
+            developer.log('Could not repair keyword mapping: ${mapping.pattern}');
+          }
+        } catch (e) {
+          developer.log('Error repairing keyword mapping ${mapping.pattern}: $e');
+        }
+      }
+    }
+
+    if (repairedCount > 0) {
+      state = state.copyWith(keywordMappings: validMappings);
+      await _saveConfig();
+    }
+
+    return repairedCount;
   }
 
   /// 중복 패턴 검사
@@ -231,19 +337,28 @@ class FileCategoryConfigNotifier extends StateNotifier<FileCategoryConfig> {
 
   /// 키워드 매핑 테스트 (파일명이 패턴과 매치되는지 확인)
   bool testKeywordPattern(String fileName, KeywordMapping mapping) {
+    return mapping.safeTestPattern(fileName);
+  }
+
+  /// 키워드 매핑 테스트 (상세 결과 반환)
+  Map<String, dynamic> testKeywordPatternDetailed(String fileName, KeywordMapping mapping) {
+    final result = <String, dynamic>{'matches': false, 'error': null, 'errorType': null, 'suggestion': null};
+
     try {
-      if (mapping.isRegex) {
-        final regex = RegExp(mapping.pattern, caseSensitive: mapping.caseSensitive);
-        return regex.hasMatch(fileName);
-      } else {
-        final searchText = mapping.caseSensitive ? fileName : fileName.toLowerCase();
-        final pattern = mapping.caseSensitive ? mapping.pattern : mapping.pattern.toLowerCase();
-        return searchText.contains(pattern);
-      }
+      result['matches'] = mapping.testPattern(fileName, throwOnError: true);
     } catch (e) {
-      developer.log('Error testing keyword pattern "${mapping.pattern}" against "$fileName": $e');
-      return false;
+      if (e is KeywordMappingException) {
+        result['error'] = e.displayMessage;
+        result['errorType'] = e.type.toString();
+        result['suggestion'] = e.suggestionMessage;
+      } else {
+        result['error'] = e.toString();
+        result['errorType'] = 'unknown';
+        result['suggestion'] = '패턴을 확인하고 다시 시도해주세요.';
+      }
     }
+
+    return result;
   }
 
   /// 파일명에 대해 매칭되는 키워드 매핑 찾기

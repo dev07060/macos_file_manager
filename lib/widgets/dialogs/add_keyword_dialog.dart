@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:macos_file_manager/constants/app_strings.dart';
 import 'package:macos_file_manager/model/keyword_mapping.dart';
+import 'package:macos_file_manager/utils/keyword_mapping_error_handler.dart';
 
 class AddKeywordDialog extends HookConsumerWidget {
   final List<String> categories;
@@ -19,10 +20,10 @@ class AddKeywordDialog extends HookConsumerWidget {
     final selectedCategory = useState<String?>(null);
     final isRegex = useState<bool>(false);
     final caseSensitive = useState<bool>(false);
-    final patternError = useState<String?>(null);
-    final categoryError = useState<String?>(null);
-    final duplicateError = useState<String?>(null);
-    final testResult = useState<String?>(null);
+    final patternError = useState<KeywordMappingException?>(null);
+    final categoryError = useState<KeywordMappingException?>(null);
+    final duplicateError = useState<KeywordMappingException?>(null);
+    final testResult = useState<Map<String, dynamic>?>(null);
     final showHelp = useState<bool>(false);
 
     // Validation function
@@ -34,32 +35,43 @@ class AddKeywordDialog extends HookConsumerWidget {
       final pattern = patternController.text.trim();
       final category = selectedCategory.value ?? categoryController.text.trim();
 
-      // Pattern validation
-      if (pattern.isEmpty) {
-        patternError.value = '패턴을 입력해주세요.';
+      // Create temporary mapping for validation
+      final tempMapping = KeywordMapping(
+        pattern: pattern,
+        category: category,
+        isRegex: isRegex.value,
+        caseSensitive: caseSensitive.value,
+      );
+
+      // Validate using enhanced validation
+      final validationErrors = tempMapping.validate();
+      if (validationErrors.isNotEmpty) {
+        final firstError = validationErrors.first;
+        switch (firstError.type) {
+          case KeywordMappingErrorType.emptyPattern:
+          case KeywordMappingErrorType.invalidRegex:
+          case KeywordMappingErrorType.patternTooLong:
+          case KeywordMappingErrorType.patternTooComplex:
+            patternError.value = firstError;
+            break;
+          case KeywordMappingErrorType.emptyCategory:
+          case KeywordMappingErrorType.categoryTooLong:
+            categoryError.value = firstError;
+            break;
+          default:
+            patternError.value = firstError;
+        }
         return;
       }
 
       // Check for duplicate patterns
       final isDuplicate = existingMappings.any((mapping) => mapping.pattern.toLowerCase() == pattern.toLowerCase());
       if (isDuplicate) {
-        duplicateError.value = '이미 존재하는 패턴입니다.';
-        return;
-      }
-
-      // Regex validation
-      if (isRegex.value) {
-        try {
-          RegExp(pattern, caseSensitive: caseSensitive.value);
-        } catch (e) {
-          patternError.value = '유효하지 않은 정규식 패턴입니다.';
-          return;
-        }
-      }
-
-      // Category validation
-      if (category.isEmpty) {
-        categoryError.value = '카테고리를 선택하거나 입력해주세요.';
+        duplicateError.value = const KeywordMappingException(
+          '이미 존재하는 패턴입니다.',
+          KeywordMappingErrorType.duplicatePattern,
+          userFriendlyMessage: '이미 같은 패턴의 규칙이 있습니다. 다른 패턴을 사용해주세요.',
+        );
         return;
       }
     }
@@ -70,27 +82,37 @@ class AddKeywordDialog extends HookConsumerWidget {
       final testFileName = testFileNameController.text.trim();
 
       if (pattern.isEmpty || testFileName.isEmpty) {
-        testResult.value = '패턴과 테스트 파일명을 모두 입력해주세요.';
+        testResult.value = {
+          'matches': false,
+          'error': AppStrings.patternAndTestFileRequired,
+          'suggestion': AppStrings.patternAndFileNameRequired,
+        };
         return;
       }
 
+      final tempMapping = KeywordMapping(
+        pattern: pattern,
+        category: 'test',
+        isRegex: isRegex.value,
+        caseSensitive: caseSensitive.value,
+      );
+
+      // Use enhanced pattern testing
+      final result = <String, dynamic>{'matches': false, 'error': null, 'suggestion': null};
+
       try {
-        bool matches = false;
-
-        if (isRegex.value) {
-          final regex = RegExp(pattern, caseSensitive: caseSensitive.value);
-          matches = regex.hasMatch(testFileName);
-        } else {
-          final searchText = caseSensitive.value ? testFileName : testFileName.toLowerCase();
-          final searchPattern = caseSensitive.value ? pattern : pattern.toLowerCase();
-          matches = searchText.contains(searchPattern);
-        }
-
-        testResult.value =
-            matches ? '✅ 매칭됨: "$testFileName"이 패턴과 일치합니다.' : '❌ 매칭되지 않음: "$testFileName"이 패턴과 일치하지 않습니다.';
+        result['matches'] = tempMapping.testPattern(testFileName, throwOnError: true);
       } catch (e) {
-        testResult.value = '❌ 패턴 테스트 오류: ${e.toString()}';
+        if (e is KeywordMappingException) {
+          result['error'] = e.displayMessage;
+          result['suggestion'] = e.suggestionMessage;
+        } else {
+          result['error'] = e.toString();
+          result['suggestion'] = AppStrings.checkPatternAndRetry;
+        }
       }
+
+      testResult.value = result;
     }
 
     // Listen to pattern changes for real-time validation
@@ -106,7 +128,7 @@ class AddKeywordDialog extends HookConsumerWidget {
     }, [patternController]);
 
     return AlertDialog(
-      title: const Text('키워드 규칙 추가'),
+      title: const Text(AppStrings.addKeywordRule),
       content: SizedBox(
         width: 500,
         child: SingleChildScrollView(
@@ -118,9 +140,9 @@ class AddKeywordDialog extends HookConsumerWidget {
               TextField(
                 controller: patternController,
                 decoration: InputDecoration(
-                  labelText: '패턴',
+                  labelText: AppStrings.pattern,
                   hintText: isRegex.value ? r'\d{4}.*report' : 'report',
-                  errorText: patternError.value ?? duplicateError.value,
+                  errorText: (patternError.value ?? duplicateError.value)?.displayMessage,
                   suffixIcon: IconButton(
                     icon: Icon(showHelp.value ? Icons.help : Icons.help_outline),
                     onPressed: () => showHelp.value = !showHelp.value,
@@ -135,8 +157,8 @@ class AddKeywordDialog extends HookConsumerWidget {
                 children: [
                   Expanded(
                     child: CheckboxListTile(
-                      title: const Text('정규식 사용'),
-                      subtitle: const Text('고급 패턴 매칭'),
+                      title: const Text(AppStrings.useRegex),
+                      subtitle: const Text(AppStrings.advancedPatternMatching),
                       value: isRegex.value,
                       onChanged: (value) {
                         isRegex.value = value ?? false;
@@ -147,7 +169,7 @@ class AddKeywordDialog extends HookConsumerWidget {
                   ),
                   Expanded(
                     child: CheckboxListTile(
-                      title: const Text('대소문자 구분'),
+                      title: const Text(AppStrings.caseSensitiveMatching),
                       value: caseSensitive.value,
                       onChanged: (value) {
                         caseSensitive.value = value ?? false;
@@ -162,13 +184,16 @@ class AddKeywordDialog extends HookConsumerWidget {
               const SizedBox(height: 16),
 
               // Category selection
-              Text('카테고리', style: Theme.of(context).textTheme.titleSmall),
+              Text(AppStrings.category, style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
 
               if (categories.isNotEmpty) ...[
                 DropdownButtonFormField<String>(
                   value: selectedCategory.value,
-                  decoration: const InputDecoration(labelText: '기존 카테고리 선택', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                    labelText: AppStrings.selectExistingCategory,
+                    border: OutlineInputBorder(),
+                  ),
                   items:
                       categories.map((category) {
                         return DropdownMenuItem(value: category, child: Text(category));
@@ -183,16 +208,16 @@ class AddKeywordDialog extends HookConsumerWidget {
                 ),
 
                 const SizedBox(height: 8),
-                const Text('또는', textAlign: TextAlign.center),
+                const Text(AppStrings.or, textAlign: TextAlign.center),
                 const SizedBox(height: 8),
               ],
 
               TextField(
                 controller: categoryController,
                 decoration: InputDecoration(
-                  labelText: '새 카테고리 입력',
-                  hintText: '보고서, 데이터, 백업 등',
-                  errorText: categoryError.value,
+                  labelText: AppStrings.enterNewCategory,
+                  hintText: AppStrings.newCategoryHint,
+                  errorText: categoryError.value?.displayMessage,
                   border: const OutlineInputBorder(),
                 ),
                 onChanged: (value) {
@@ -207,15 +232,15 @@ class AddKeywordDialog extends HookConsumerWidget {
 
               // Pattern testing section
               ExpansionTile(
-                title: const Text('패턴 테스트'),
-                subtitle: const Text('패턴이 올바르게 작동하는지 확인'),
+                title: const Text(AppStrings.patternTestSection),
+                subtitle: const Text(AppStrings.patternTestDescription),
                 children: [
                   const SizedBox(height: 8),
                   TextField(
                     controller: testFileNameController,
                     decoration: const InputDecoration(
-                      labelText: '테스트 파일명',
-                      hintText: '2024_annual_report.pdf',
+                      labelText: AppStrings.testFileNameLabel,
+                      hintText: AppStrings.testFileNameHint,
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -226,25 +251,22 @@ class AddKeywordDialog extends HookConsumerWidget {
                         child: ElevatedButton.icon(
                           onPressed: testPattern,
                           icon: const Icon(Icons.play_arrow),
-                          label: const Text('테스트 실행'),
+                          label: const Text(AppStrings.runTest),
                         ),
                       ),
                     ],
                   ),
                   if (testResult.value != null) ...[
                     const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color:
-                            testResult.value!.startsWith('✅')
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.red.withValues(alpha: 0.1),
-                        border: Border.all(color: testResult.value!.startsWith('✅') ? Colors.green : Colors.red),
-                        borderRadius: BorderRadius.circular(4),
+                    KeywordMappingErrorHandler.buildPatternTestResult(
+                      testFileNameController.text,
+                      KeywordMapping(
+                        pattern: patternController.text,
+                        category: 'test',
+                        isRegex: isRegex.value,
+                        caseSensitive: caseSensitive.value,
                       ),
-                      child: Text(testResult.value!),
+                      testResult.value!,
                     ),
                   ],
                 ],
@@ -264,15 +286,15 @@ class AddKeywordDialog extends HookConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '패턴 예시',
+                        AppStrings.patternExamples,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
-                      const Text('단순 텍스트:'),
+                      const Text(AppStrings.simpleText),
                       const Text('• report → "report"가 포함된 파일'),
                       const Text('• backup → "backup"이 포함된 파일'),
                       const SizedBox(height: 8),
-                      const Text('정규식 패턴:'),
+                      const Text(AppStrings.regexPatterns),
                       const Text(r'• \d{4}.*report → "2024_annual_report.pdf"'),
                       const Text(r'• backup_\w+_\d+ → "backup_db_20240101.sql"'),
                       const Text(r'• (IMG|DSC)_\d+ → "IMG_1234.jpg", "DSC_5678.jpg"'),
@@ -295,16 +317,33 @@ class AddKeywordDialog extends HookConsumerWidget {
               final pattern = patternController.text.trim();
               final category = selectedCategory.value ?? categoryController.text.trim();
 
-              final keywordMapping = KeywordMapping(
-                pattern: pattern,
-                category: category,
-                isRegex: isRegex.value,
-                caseSensitive: caseSensitive.value,
-                priority: existingMappings.length, // Set priority as next in sequence
-                isCustom: true,
-              );
+              try {
+                final keywordMapping = KeywordMapping(
+                  pattern: pattern,
+                  category: category,
+                  isRegex: isRegex.value,
+                  caseSensitive: caseSensitive.value,
+                  priority: existingMappings.length, // Set priority as next in sequence
+                  isCustom: true,
+                );
 
-              Navigator.of(context).pop(keywordMapping);
+                // Final validation before returning
+                final finalErrors = keywordMapping.validate();
+                if (finalErrors.isNotEmpty) {
+                  KeywordMappingErrorHandler.showErrorSnackBar(context, finalErrors.first);
+                  return;
+                }
+
+                Navigator.of(context).pop(keywordMapping);
+              } catch (e) {
+                if (e is KeywordMappingException) {
+                  KeywordMappingErrorHandler.showErrorSnackBar(context, e);
+                } else {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('${AppStrings.errorOccurred} ${e.toString()}')));
+                }
+              }
             }
           },
           child: const Text(AppStrings.add),
