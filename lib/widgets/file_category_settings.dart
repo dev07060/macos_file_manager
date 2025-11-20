@@ -7,41 +7,76 @@ import 'package:macos_file_manager/providers/file_category_config_provider.dart'
 import 'package:macos_file_manager/widgets/dialogs/add_extension_dialog.dart';
 import 'package:macos_file_manager/widgets/dialogs/edit_extension_dialog.dart';
 import 'package:macos_file_manager/widgets/dialogs/import_config_dialog.dart';
+import 'package:macos_file_manager/widgets/keyword_mapping_tab.dart';
 
 class FileCategorySettingsDialog extends ConsumerWidget {
   const FileCategorySettingsDialog({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Dialog(
-      child: Container(
-        width: 800,
-        height: 600,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                const Text(AppStrings.fileCategorySettings, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Expanded(child: _ExtensionMappingTab()),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                TextButton(onPressed: () => _showResetDialog(context, ref), child: const Text(AppStrings.reset)),
-                const SizedBox(width: 8),
-                TextButton(onPressed: () => _exportConfig(context, ref), child: const Text(AppStrings.exportSettings)),
-                const SizedBox(width: 8),
-                TextButton(onPressed: () => _importConfig(context, ref), child: const Text(AppStrings.importSettings)),
-                const Spacer(),
-                ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: const Text(AppStrings.complete)),
-              ],
-            ),
-          ],
+    return DefaultTabController(
+      length: 2,
+      child: Dialog(
+        child: Container(
+          width: 900,
+          height: 700,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    AppStrings.fileCategorySettings,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  IconButton(onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close)),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // 탭 바
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: .3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: TabBar(
+                  tabs: const [
+                    Tab(icon: Icon(Icons.extension), text: '확장자 매핑'),
+                    Tab(icon: Icon(Icons.search), text: '키워드 매핑'),
+                  ],
+                  labelColor: Theme.of(context).colorScheme.primary,
+                  unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: .6),
+                  indicatorColor: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // 탭 뷰
+              const Expanded(child: TabBarView(children: [_ExtensionMappingTab(), KeywordMappingTab()])),
+
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  TextButton(onPressed: () => _showResetDialog(context, ref), child: const Text(AppStrings.reset)),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () => _exportConfig(context, ref),
+                    child: const Text(AppStrings.exportSettings),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () => _importConfig(context, ref),
+                    child: const Text(AppStrings.importSettings),
+                  ),
+                  const Spacer(),
+                  ElevatedButton(onPressed: () => Navigator.of(context).pop(), child: const Text(AppStrings.complete)),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -60,7 +95,9 @@ class FileCategorySettingsDialog extends ConsumerWidget {
                 onPressed: () {
                   ref.read(fileCategoryConfigProvider.notifier).resetToDefault();
                   Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(AppStrings.settingsResetMessage)));
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text(AppStrings.settingsResetMessage)));
                 },
                 child: const Text(AppStrings.reset),
               ),
@@ -123,11 +160,17 @@ class _ExtensionMappingTab extends ConsumerWidget {
           ),
           child: const Row(
             children: [
-              SizedBox(width: 100, child: Text(AppStrings.extensionLabel, style: TextStyle(fontWeight: FontWeight.bold))),
-              SizedBox(width: 150, child: Text(AppStrings.categoryLabel, style: TextStyle(fontWeight: FontWeight.bold))),
-              SizedBox(width: 80, child: Text('타입', style: TextStyle(fontWeight: FontWeight.bold))),
+              SizedBox(
+                width: 100,
+                child: Text(AppStrings.extensionLabel, style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              SizedBox(
+                width: 150,
+                child: Text(AppStrings.categoryLabel, style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              SizedBox(width: 80, child: Text(AppStrings.type, style: TextStyle(fontWeight: FontWeight.bold))),
               Spacer(),
-              SizedBox(width: 100, child: Text('작업', style: TextStyle(fontWeight: FontWeight.bold))),
+              SizedBox(width: 100, child: Text(AppStrings.actions, style: TextStyle(fontWeight: FontWeight.bold))),
             ],
           ),
         ),
@@ -173,7 +216,7 @@ class _ExtensionMappingTab extends ConsumerWidget {
                           ),
                         ),
                         child: Text(
-                          mapping.isCustom ? '사용자' : '기본',
+                          mapping.isCustom ? AppStrings.user : AppStrings.default_,
                           style: TextStyle(
                             fontSize: 12,
                             color: mapping.isCustom ? Colors.blue : Colors.grey[600],
